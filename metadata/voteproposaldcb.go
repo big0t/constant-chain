@@ -1,6 +1,10 @@
 package metadata
 
 import (
+	"errors"
+
+	"github.com/constant-money/constant-chain/database/lvdb"
+
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
 	"github.com/constant-money/constant-chain/database"
@@ -52,12 +56,32 @@ func (dcbVoteProposalMetadata *DCBVoteProposalMetadata) ValidateTxWithBlockChain
 	//	shardID,
 	//	db,
 	//)
+	found := false
+	board := bcr.GetBoardPaymentAddress(common.DCBBoard)
+	for _, payment := range board {
+		if common.ByteEqual(payment.Bytes(), dcbVoteProposalMetadata.NormalVoteProposalMetadata.VoterPayment.Bytes()) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return false, errors.New("Voter is not governor")
+	}
+	key := lvdb.GetKeySubmitProposal(common.DCBBoard,
+		dcbVoteProposalMetadata.NormalVoteProposalMetadata.ConstitutionIndex,
+		dcbVoteProposalMetadata.NormalVoteProposalMetadata.VoterPayment.Bytes(),
+	)
+	found, err := bcr.GetDatabase().HasValue(key)
+	if err != nil {
+		return false, err
+	}
+	if found {
+		return false, errors.New("Just vote 1 proposal")
+	}
 	return true, nil
 }
 
 func (dcbVoteProposalMetadata *DCBVoteProposalMetadata) BuildReqActions(
-	//Hyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-	//Step 1 hyyyyyyyyyyyyyyyyyyyyyyyy
 	tx Transaction,
 	bcr BlockchainRetriever,
 	shardID byte,

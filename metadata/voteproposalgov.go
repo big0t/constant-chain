@@ -1,9 +1,12 @@
 package metadata
 
 import (
+	"errors"
+
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
 	"github.com/constant-money/constant-chain/database"
+	"github.com/constant-money/constant-chain/database/lvdb"
 	"github.com/constant-money/constant-chain/metadata/fromshardins"
 )
 
@@ -17,7 +20,10 @@ type GOVVoteProposalMetadata struct {
 }
 
 func (govVoteProposalMetadata *GOVVoteProposalMetadata) ValidateSanityData(bcr BlockchainRetriever, tx Transaction) (bool, bool, error) {
-	//return govVoteProposalMetadata.VoteProposalMetadata.ValidateSanityData(bcr, tx)
+	rightConstitutionIndex := bcr.GetConstitution(common.GOVBoard).GetConstitutionIndex() + 1
+	if govVoteProposalMetadata.VoteProposalMetadata.ConstitutionIndex != rightConstitutionIndex {
+		return true, false, errors.New("Wrong constitution index")
+	}
 	return true, true, nil
 }
 
@@ -52,6 +58,28 @@ func (govVoteProposalMetadata *GOVVoteProposalMetadata) ValidateTxWithBlockChain
 	//	shardID,
 	//	db,
 	//)
+	found := false
+	board := bcr.GetBoardPaymentAddress(common.GOVBoard)
+	for _, payment := range board {
+		if common.ByteEqual(payment.Bytes(), govVoteProposalMetadata.VoteProposalMetadata.VoterPayment.Bytes()) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return false, errors.New("Voter is not governor")
+	}
+	key := lvdb.GetKeySubmitProposal(common.GOVBoard,
+		govVoteProposalMetadata.VoteProposalMetadata.ConstitutionIndex,
+		govVoteProposalMetadata.VoteProposalMetadata.VoterPayment.Bytes(),
+	)
+	found, err := bcr.GetDatabase().HasValue(key)
+	if err != nil {
+		return false, err
+	}
+	if found {
+		return false, errors.New("Just vote 1 proposal")
+	}
 	return true, nil
 }
 

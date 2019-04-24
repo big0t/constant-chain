@@ -27,6 +27,16 @@ func calculateSize(meta Metadata) uint64 {
 	return uint64(len(metaBytes))
 }
 
+func (mb *MetadataBase) IsMinerCreatedMetaType() bool {
+	metaType := mb.GetType()
+	for _, mType := range minerCreatedMetaTypes {
+		if metaType == mType {
+			return true
+		}
+	}
+	return false
+}
+
 func (mb *MetadataBase) CalculateSize() uint64 {
 	return 0
 }
@@ -73,6 +83,17 @@ func (mb *MetadataBase) BuildReqActions(tx Transaction, bcr BlockchainRetriever,
 
 func (mb *MetadataBase) ProcessWhenInsertBlockShard(tx Transaction, retriever BlockchainRetriever) error {
 	return nil
+}
+
+func (mb *MetadataBase) VerifyMinerCreatedTxBeforeGettingInBlock(
+	insts [][]string,
+	instsUsed []int,
+	shardID byte,
+	txr Transaction,
+	bcr BlockchainRetriever,
+	accumulatedData *component.UsedInstData,
+) (bool, error) {
+	return true, nil
 }
 
 // This is tx struct which is really saved in tx mempool
@@ -139,6 +160,8 @@ type BlockchainRetriever interface {
 	GetConstitution(boardType common.BoardType) ConstitutionInterface
 	// UpdateDCBFund(transaction Transaction)
 	GetGovernor(boardType common.BoardType) GovernorInterface
+	CalcTradeData(string) (*component.TradeData, error)
+	GetSellBondPrice(*common.Hash) uint64
 }
 
 // Interface for all types of metadata in tx
@@ -155,6 +178,8 @@ type Metadata interface {
 	BuildReqActions(tx Transaction, bcr BlockchainRetriever, shardID byte) ([][]string, error)
 	ProcessWhenInsertBlockShard(tx Transaction, bcr BlockchainRetriever) error
 	CalculateSize() uint64
+	VerifyMinerCreatedTxBeforeGettingInBlock([][]string, []int, byte, Transaction, BlockchainRetriever, *component.UsedInstData) (bool, error)
+	IsMinerCreatedMetaType() bool
 }
 
 // Interface for all type of transaction
@@ -197,7 +222,9 @@ type Transaction interface {
 	GetTokenUniqueReceiver() (bool, []byte, uint64)
 	GetAmountOfVote(common.BoardType) (uint64, error)
 	GetVoterPaymentAddress() (*privacy.PaymentAddress, error)
+	GetSenderPaymentAddress() (*privacy.PaymentAddress, error)
 
 	GetMetadataFromVinsTx(BlockchainRetriever) (Metadata, error)
 	GetTokenID() *common.Hash
+	VerifyMinerCreatedTxBeforeGettingInBlock([][]string, []int, byte, BlockchainRetriever, *component.UsedInstData) (bool, error)
 }

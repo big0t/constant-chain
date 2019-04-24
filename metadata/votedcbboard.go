@@ -36,6 +36,9 @@ func NewVoteDCBBoardMetadataFromRPC(data map[string]interface{}) (Metadata, erro
 }
 
 func (voteDCBBoardMetadata *VoteDCBBoardMetadata) ValidateTxWithBlockChain(txr Transaction, bcr BlockchainRetriever, shardID byte, db database.DatabaseInterface) (bool, error) {
+	if txr.IsPrivacy() {
+		return false, errors.New("Can not vote with privacy transaction!")
+	}
 	voteAmount, err := txr.GetAmountOfVote(common.DCBBoard)
 	if err != nil {
 		return false, err

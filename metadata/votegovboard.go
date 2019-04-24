@@ -1,6 +1,8 @@
 package metadata
 
 import (
+	"errors"
+
 	"github.com/constant-money/constant-chain/metadata/fromshardins"
 	"github.com/constant-money/constant-chain/wallet"
 
@@ -31,6 +33,16 @@ func NewVoteGOVBoardMetadataFromRPC(data map[string]interface{}) (Metadata, erro
 }
 
 func (voteGOVBoardMetadata *VoteGOVBoardMetadata) ValidateTxWithBlockChain(txr Transaction, bcr BlockchainRetriever, shardID byte, db database.DatabaseInterface) (bool, error) {
+	if txr.IsPrivacy() {
+		return false, errors.New("Can not vote with privacy transaction!")
+	}
+	voteAmount, err := txr.GetAmountOfVote(common.GOVBoard)
+	if err != nil {
+		return false, err
+	}
+	if voteAmount == 0 {
+		return false, errors.New("Amount of vote must large than zero!")
+	}
 	return true, nil
 }
 
