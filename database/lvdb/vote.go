@@ -290,3 +290,20 @@ func decompListPaymentAddressesByte(paymentAddressesByte []byte) []privacy.Payme
 	}
 	return res
 }
+
+func ViewDetailDBByPrefix(db database.DatabaseInterface, prefix []byte) map[string][]byte {
+	begin := prefix
+	// +1 to search in that range
+	end := common.BytesPlusOne(prefix)
+
+	searchRange := util.Range{
+		Start: begin,
+		Limit: end,
+	}
+	iter := db.NewIterator(&searchRange, nil)
+	res := make(map[string][]byte)
+	for iter.Next() {
+		res[string(iter.Key())] = iter.Key()
+	}
+	return res
+}

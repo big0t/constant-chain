@@ -167,6 +167,7 @@ const (
 	CreateAndSendSubmitGOVProposalTx = "createandsendsubmitgovproposaltx"
 	CreateRawSubmitGOVProposalTx     = "createrawsubmitgovproposaltx"
 	SendRawSubmitGOVProposalTx       = "sendrawsubmitgovproposaltx"
+	GetProposalTxIDbyConstitutionID  = "getproposaltxidbyconstitutionid"
 
 	// dcb
 	// CreateAndSendTxWithIssuingRequest     = "createandsendtxwithissuingrequest"

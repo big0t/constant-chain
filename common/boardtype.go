@@ -5,9 +5,11 @@ type BoardType byte
 func NewBoardTypeFromString(s string) BoardType {
 	if s == "dcb" {
 		return DCBBoard
-	} else {
+	}
+	if s == "gov" {
 		return GOVBoard
 	}
+	return 255
 }
 
 func (boardType *BoardType) Bytes() []byte {

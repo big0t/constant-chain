@@ -1463,5 +1463,73 @@ func (bc *BlockChain) processUpdateGOVConstitutionIns(inst []string) error {
 	if err != nil {
 		return err
 	}
+	bc.GetDatabase().AddBoardFundDB(boardType, constitution.GetConstitutionIndex(), bc.BestState.Beacon.StabilityInfo.SalaryFund)
+	return nil
+}
+
+func (bc *BlockChain) processKeepOldDCBConstitutionIns(inst []string) error {
+	keepOldProposalIns, err := frombeaconins.NewKeepOldProposalInsFromStr(inst)
+	if err != nil {
+		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
+		return err
+	}
+	fmt.Println("[ndh] - - - this line just for shard")
+	boardType := common.DCBBoard
+	constitution := bc.GetConstitution(boardType)
+	nextConstitutionIndex := constitution.GetConstitutionIndex() + 1
+	newConstitution := bc.GetConstitution(boardType).(DCBConstitution)
+	currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
+	if err != nil {
+		fmt.Printf("[ndh] errorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr %+v\n", err)
+		return err
+	}
+	key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
+	bc.GetDatabase().Put(key, []byte{0})
+	err = bc.GetDatabase().SetNewProposalWinningVoter(
+		boardType,
+		nextConstitutionIndex,
+		newConstitution.Voters,
+	)
+	if err != nil {
+		return err
+	}
+	err = bc.BestState.Beacon.processKeepOldDCBProposalInstruction(*keepOldProposalIns)
+	if err != nil {
+		return err
+	}
+	bc.GetDatabase().AddBoardFundDB(boardType, constitution.GetConstitutionIndex(), bc.BestState.Beacon.StabilityInfo.BankFund)
+	return nil
+}
+
+func (bc *BlockChain) processKeepOldGOVConstitutionIns(inst []string) error {
+	keepOldProposalIns, err := frombeaconins.NewKeepOldProposalInsFromStr(inst)
+	if err != nil {
+		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
+		return err
+	}
+	boardType := common.GOVBoard
+	constitution := bc.GetConstitution(boardType)
+	nextConstitutionIndex := constitution.GetConstitutionIndex() + 1
+	newConstitution := bc.GetConstitution(boardType).(GOVConstitution)
+	currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
+	if err != nil {
+		fmt.Printf("[ndh] errorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr %+v\n", err)
+		return err
+	}
+	key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
+	bc.GetDatabase().Put(key, []byte{0})
+	err = bc.GetDatabase().SetNewProposalWinningVoter(
+		boardType,
+		nextConstitutionIndex,
+		newConstitution.Voters,
+	)
+	if err != nil {
+		return err
+	}
+	err = bc.BestState.Beacon.processKeepOldGOVProposalInstruction(*keepOldProposalIns)
+	if err != nil {
+		return err
+	}
+	bc.GetDatabase().AddBoardFundDB(boardType, constitution.GetConstitutionIndex(), bc.BestState.Beacon.StabilityInfo.SalaryFund)
 	return nil
 }

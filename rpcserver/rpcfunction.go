@@ -164,6 +164,7 @@ var RpcHandler = map[string]commandHandler{
 	CreateRawSubmitDCBProposalTx:     RpcServer.handleCreateRawSubmitDCBProposalTransaction,
 	CreateAndSendSubmitGOVProposalTx: RpcServer.handleCreateAndSendSubmitGOVProposalTransaction,
 	CreateRawSubmitGOVProposalTx:     RpcServer.handleCreateRawSubmitGOVProposalTransaction,
+	GetProposalTxIDbyConstitutionID:  RpcServer.handleGetProposalTxIDbyConstitutionID,
 
 	// dcb
 	GetDCBParams:       RpcServer.handleGetDCBParams,

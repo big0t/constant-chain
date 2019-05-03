@@ -547,18 +547,24 @@ func (tx *TxCustomToken) GetTxCustomTokenSignature(keyset cashec.KeySet) ([]byte
 	return keyset.Sign(buff.Bytes())
 }
 
-func (tx *TxCustomToken) GetAmountOfVote() (uint64, error) {
-	sum := uint64(0)
+func (tx *TxCustomToken) GetAmountOfVote(boardType common.BoardType) (uint64, error) {
+	burningSum := uint64(0)
+	if ((boardType == common.DCBBoard) && (common.DCBTokenID.Cmp(&tx.TxTokenData.PropertyID) != 0)) || ((boardType == common.GOVBoard) && (common.GOVTokenID.Cmp(&tx.TxTokenData.PropertyID) != 0)) {
+		fmt.Printf("[ndh] %+v GetAmountOfVote %+v %+v %+v +%v\n", tx.TxTokenData.PropertyID, (boardType == common.DCBBoard), (common.DCBTokenID.Cmp(&tx.TxTokenData.PropertyID) != 0), (boardType == common.GOVBoard), (common.GOVTokenID.Cmp(&tx.TxTokenData.PropertyID) != 0))
+		return 0, errors.New("Just one custom token type in transaction vote!")
+	}
+	keyWallet, _ := wallet.Base58CheckDeserialize(common.BurningAddress)
+	keyset := keyWallet.KeySet
+	paymentAddress := keyset.PaymentAddress
+	pubKey := string(paymentAddress.Pk)
+	fmt.Println("[ndh] - - - - vouts : : ", tx.TxTokenData.Vouts[0].PaymentAddress.String(), pubKey)
 	for _, vout := range tx.TxTokenData.Vouts {
-		keyWallet, _ := wallet.Base58CheckDeserialize(common.BurningAddress)
-		keyset := keyWallet.KeySet
-		paymentAddress := keyset.PaymentAddress
-		pubKey := string(paymentAddress.Pk)
+		fmt.Printf("[ndh] BoardType: %+v - - - - - - - - - %+v; DCB: %+v; GOV: %+v\n", boardType, vout.txCustomTokenID.String(), common.DCBTokenID.String(), common.GOVTokenID.String())
 		if string(vout.PaymentAddress.Pk) == string(pubKey) {
-			sum += vout.Value
+			burningSum += vout.Value
 		}
 	}
-	return sum, nil
+	return burningSum, nil
 }
 
 func (tx *TxCustomToken) GetVoterPaymentAddress() (*privacy.PaymentAddress, error) {

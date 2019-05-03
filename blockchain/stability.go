@@ -100,11 +100,25 @@ func buildStabilityActions(
 			if err != nil {
 				continue
 			}
-			if shardToProcess == int(shardID) {
-				metaType, err := strconv.Atoi(l[0])
+			metaType, err := strconv.Atoi(l[0])
+			if err != nil {
+				continue
+			}
+			switch metaType {
+			case component.AcceptDCBProposalIns, component.AcceptGOVProposalIns:
+				acceptProposalIns := frombeaconins.AcceptProposalIns{}
+				err := json.Unmarshal([]byte(l[2]), &acceptProposalIns)
 				if err != nil {
+					fmt.Println("[ndh] - error 1 ", err.Error())
 					return nil, err
 				}
+				boardType := acceptProposalIns.BoardType
+				txID := acceptProposalIns.TxID
+				currentConstitutionID := bc.GetConstitution(boardType).GetConstitutionIndex()
+				key := lvdb.GetKeySubmitProposal(boardType, currentConstitutionID+1, txID.GetBytes())
+				bc.GetDatabase().Put(key, []byte{0})
+			}
+			if shardToProcess == int(shardID) {
 				var newIns []string
 				if metaType != 37 {
 					fmt.Println("[voting] - instructions metaType: ", metaType, component.AcceptDCBProposalIns)
