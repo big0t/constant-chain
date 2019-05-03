@@ -18,7 +18,7 @@ const (
 	ThresholdRatioOfDCBCrisis   = 9000
 	ThresholdRatioOfGOVCrisis   = 9000
 	ConstitutionPerBoard        = 10
-	EndOfFirstBoard             = 50
+	EndOfFirstBoard             = 70
 	ExtendDurationForFirstBoard = 30
 	BaseSalaryBoard             = 10000
 )
@@ -71,8 +71,8 @@ const (
 
 	//board and proposal parameters
 	TestnetSalaryPerTx                = 1
-	TestnetBasicSalary                = 0
-	TestnetInitFundSalary             = 0
+	TestnetBasicSalary                = 1
+	TestnetInitFundSalary             = 1000000000
 	TestnetInitDCBToken               = 10000
 	TestnetInitGovToken               = 10000
 	TestnetInitCmBToken               = 0

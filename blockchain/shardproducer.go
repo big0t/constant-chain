@@ -20,7 +20,7 @@ import (
 func (blockgen *BlkTmplGenerator) NewBlockShard(producerKeySet *cashec.KeySet, shardID byte, proposerOffset int, crossShards map[byte]uint64) (*ShardBlock, error) {
 	//============Build body=============
 	// Fetch Beacon information
-	fmt.Printf("[ndh] ========================== Creating shard block[%+v] ==============================", blockgen.chain.BestState.Shard[shardID].ShardHeight+1)
+	fmt.Printf("[ndh] ========================== Creating shard block[%+v] ==============================\n", blockgen.chain.BestState.Shard[shardID].ShardHeight+1)
 	beaconHeight := blockgen.chain.BestState.Beacon.BeaconHeight
 	beaconHash := blockgen.chain.BestState.Beacon.BestBlockHash
 	epoch := blockgen.chain.BestState.Beacon.Epoch
