@@ -100,11 +100,25 @@ func buildStabilityActions(
 			if err != nil {
 				continue
 			}
-			if shardToProcess == int(shardID) {
-				metaType, err := strconv.Atoi(l[0])
+			metaType, err := strconv.Atoi(l[0])
+			if err != nil {
+				continue
+			}
+			switch metaType {
+			case component.AcceptDCBProposalIns, component.AcceptGOVProposalIns:
+				acceptProposalIns := frombeaconins.AcceptProposalIns{}
+				err := json.Unmarshal([]byte(l[2]), &acceptProposalIns)
 				if err != nil {
+					fmt.Println("[ndh] - error 1 ", err.Error())
 					return nil, err
 				}
+				boardType := acceptProposalIns.BoardType
+				txID := acceptProposalIns.TxID
+				currentConstitutionID := bc.GetConstitution(boardType).GetConstitutionIndex()
+				key := lvdb.GetKeySubmitProposal(boardType, currentConstitutionID+1, txID.GetBytes())
+				bc.GetDatabase().Put(key, []byte{0})
+			}
+			if shardToProcess == int(shardID) {
 				var newIns []string
 				if metaType != 37 {
 					fmt.Printf("[ndh] - instructions from beacon to shard metaType: %+v\n", l)
@@ -350,48 +364,48 @@ func (blockgen *BlkTmplGenerator) buildStabilityResponseTxsFromInstructions(
 				switch metaType {
 				case component.RewardDCBProposalSubmitterIns:
 					fmt.Println("[ndh]-RewardDCBProposalSubmitterIns")
-					rewardProposalSubmitter := frombeaconins.RewardProposalSubmitterIns{}
+					rewardProposalSubmitter := component.RewardProposalSubmitterIns{}
 					err := json.Unmarshal([]byte(l[2]), &rewardProposalSubmitter)
 					if err != nil {
 						return nil, err
 					}
-					tx, err := rewardProposalSubmitter.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase, common.DCBBoard)
+					tx, err := blockgen.chain.BuildTransaction(metaType, rewardProposalSubmitter, producerPrivateKey, blockgen.chain.config.DataBase, byte(common.DCBBoard))
 					if err != nil {
 						return nil, err
 					}
 					resTxs = append(resTxs, tx)
 				case component.RewardGOVProposalSubmitterIns:
 					fmt.Println("[ndh]-RewardGOVProposalSubmitterIns")
-					rewardProposalSubmitter := frombeaconins.RewardProposalSubmitterIns{}
+					rewardProposalSubmitter := component.RewardProposalSubmitterIns{}
 					err := json.Unmarshal([]byte(l[2]), &rewardProposalSubmitter)
 					if err != nil {
 						return nil, err
 					}
-					tx, err := rewardProposalSubmitter.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase, common.GOVBoard)
+					tx, err := blockgen.chain.BuildTransaction(metaType, rewardProposalSubmitter, producerPrivateKey, blockgen.chain.config.DataBase, byte(common.GOVBoard))
 					if err != nil {
 						return nil, err
 					}
 					resTxs = append(resTxs, tx)
 				case component.RewardDCBProposalVoterIns:
 					fmt.Println("[ndh]-RewardDCBProposalVoterIns")
-					rewardProposalVoter := frombeaconins.RewardProposalVoterIns{}
+					rewardProposalVoter := component.RewardProposalVoterIns{}
 					err := json.Unmarshal([]byte(l[2]), &rewardProposalVoter)
 					if err != nil {
 						return nil, err
 					}
-					tx, err := rewardProposalVoter.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase, common.DCBBoard)
+					tx, err := blockgen.chain.BuildTransaction(metaType, rewardProposalVoter, producerPrivateKey, blockgen.chain.config.DataBase, byte(common.DCBBoard))
 					if err != nil {
 						return nil, err
 					}
 					resTxs = append(resTxs, tx)
 				case component.RewardGOVProposalVoterIns:
 					fmt.Println("[ndh]-RewardGOVProposalVoterIns")
-					rewardProposalVoter := frombeaconins.RewardProposalVoterIns{}
+					rewardProposalVoter := component.RewardProposalVoterIns{}
 					err := json.Unmarshal([]byte(l[2]), &rewardProposalVoter)
 					if err != nil {
 						return nil, err
 					}
-					tx, err := rewardProposalVoter.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase, common.GOVBoard)
+					tx, err := blockgen.chain.BuildTransaction(metaType, rewardProposalVoter, producerPrivateKey, blockgen.chain.config.DataBase, byte(common.GOVBoard))
 					if err != nil {
 						return nil, err
 					}
@@ -417,24 +431,27 @@ func (blockgen *BlkTmplGenerator) buildStabilityResponseTxsFromInstructions(
 
 				case component.SendBackTokenVoteBoardFailIns:
 					fmt.Println("[ndh]-SendBackTokenVoteBoardFailIns")
-					sendBackTokenVoteFail := frombeaconins.TxSendBackTokenVoteFailIns{}
+					sendBackTokenVoteFail := component.TxSendBackTokenVoteFailIns{}
 					err := json.Unmarshal([]byte(l[2]), &sendBackTokenVoteFail)
 					if err != nil {
 						return nil, err
 					}
 
-					tx, err = sendBackTokenVoteFail.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase, blockgen.chain, shardID)
+					tx, err = blockgen.chain.BuildTransaction(metaType, sendBackTokenVoteFail, producerPrivateKey, blockgen.chain.config.DataBase, shardID)
+					if err != nil {
+						return nil, err
+					}
 					fmt.Println("[ndh]-SendBackTokenVoteBoardFailIns Ok, tx:", tx.GetMetadata())
 					txs = append(txs, tx)
 
 				case metadata.SendBackTokenToOldSupporterMeta:
 					fmt.Println("[ndh]-SendBackTokenToOldSupporterMeta")
-					sendBackTokenToOldSupporter := frombeaconins.TxSendBackTokenToOldSupporterIns{}
+					sendBackTokenToOldSupporter := component.TxSendBackTokenToOldSupporterIns{}
 					err := json.Unmarshal([]byte(l[2]), &sendBackTokenToOldSupporter)
 					if err != nil {
 						return nil, err
 					}
-					tx, err = sendBackTokenToOldSupporter.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase, blockgen.chain, shardID)
+					tx, err = blockgen.chain.BuildTransaction(metaType, sendBackTokenToOldSupporter, producerPrivateKey, blockgen.chain.config.DataBase, shardID)
 
 					if err != nil {
 						return nil, err
@@ -445,12 +462,12 @@ func (blockgen *BlkTmplGenerator) buildStabilityResponseTxsFromInstructions(
 				case component.ShareRewardOldDCBBoardSupportterIns, component.ShareRewardOldGOVBoardSupportterIns:
 					fmt.Printf("[ndh]-ShareRewardOldBoardSupportterIns ok, tx: %+v\n", tx)
 					fmt.Printf("[ndh]-ShareRewardOldBoardSupportterIns ok, Ins: %+v\n", l)
-					shareRewardOldBoard := frombeaconins.ShareRewardOldBoardIns{}
+					shareRewardOldBoard := component.ShareRewardOldBoardIns{}
 					err := json.Unmarshal([]byte(l[2]), &shareRewardOldBoard)
 					if err != nil {
 						return nil, err
 					}
-					tx, err = shareRewardOldBoard.BuildTransaction(producerPrivateKey, blockgen.chain.config.DataBase)
+					tx, err = blockgen.chain.BuildTransaction(metaType, shareRewardOldBoard, producerPrivateKey, blockgen.chain.config.DataBase, byte(shareRewardOldBoard.BoardType))
 					txs = append(txs, tx)
 
 				case metadata.IssuingRequestMeta:

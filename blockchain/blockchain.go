@@ -1287,8 +1287,8 @@ func (blockchain *BlockChain) GetConstitutionIndex(helper ConstitutionHelper) ui
 // }
 
 //This function is called after successful connect block => block height is block height of best state
-// func (self *BlockChain) CreateUpdateEncryptPhraseAndRewardConstitutionIns(helper ConstitutionHelper) ([]frombeaconins.InstructionFromBeacon, error) {
-// 	instructions := make([]frombeaconins.InstructionFromBeacon, 0)
+// func (self *BlockChain) CreateUpdateEncryptPhraseAndRewardConstitutionIns(helper ConstitutionHelper) ([]component.InstructionFromBeacon, error) {
+// 	instructions := make([]component.InstructionFromBeacon, 0)
 // 	flag := byte(0)
 // 	boardType := helper.GetBoardType()
 // 	if self.NeedToEnterEncryptionPhrase(helper) {
@@ -1486,10 +1486,18 @@ func (bc *BlockChain) processKeepOldDCBConstitutionIns(inst []string) error {
 		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
 		return err
 	}
+	fmt.Println("[ndh] - - - this line just for shard")
 	boardType := common.DCBBoard
 	constitution := bc.GetConstitution(boardType)
 	nextConstitutionIndex := constitution.GetConstitutionIndex() + 1
 	newConstitution := bc.GetConstitution(boardType).(DCBConstitution)
+	currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
+	if err != nil {
+		fmt.Printf("[ndh] errorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr %+v\n", err)
+		return err
+	}
+	key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
+	bc.GetDatabase().Put(key, []byte{0})
 	err = bc.GetDatabase().SetNewProposalWinningVoter(
 		boardType,
 		nextConstitutionIndex,
@@ -1516,6 +1524,13 @@ func (bc *BlockChain) processKeepOldGOVConstitutionIns(inst []string) error {
 	constitution := bc.GetConstitution(boardType)
 	nextConstitutionIndex := constitution.GetConstitutionIndex() + 1
 	newConstitution := bc.GetConstitution(boardType).(GOVConstitution)
+	currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
+	if err != nil {
+		fmt.Printf("[ndh] errorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr %+v\n", err)
+		return err
+	}
+	key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
+	bc.GetDatabase().Put(key, []byte{0})
 	err = bc.GetDatabase().SetNewProposalWinningVoter(
 		boardType,
 		nextConstitutionIndex,

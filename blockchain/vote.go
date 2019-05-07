@@ -7,9 +7,9 @@ import (
 
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
+	"github.com/constant-money/constant-chain/database"
 	"github.com/constant-money/constant-chain/database/lvdb"
 	"github.com/constant-money/constant-chain/metadata"
-	"github.com/constant-money/constant-chain/metadata/frombeaconins"
 	"github.com/constant-money/constant-chain/privacy"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -17,11 +17,11 @@ import (
 
 type ConstitutionHelper interface {
 	CheckSubmitProposalType(tx metadata.Transaction) bool
-	NewAcceptProposalIns(txId *common.Hash, voter []privacy.PaymentAddress, shardID byte) frombeaconins.InstructionFromBeacon
-	NewKeepOldProposalIns() frombeaconins.InstructionFromBeacon
+	NewAcceptProposalIns(txId *common.Hash, voter []privacy.PaymentAddress, shardID byte) component.InstructionFromBeacon
+	NewKeepOldProposalIns() component.InstructionFromBeacon
 	GetBoardType() common.BoardType
 	GetConstitutionEndedBlockHeight(chain *BlockChain) uint64
-	NewRewardProposalSubmitterIns(blockgen *BlockChain, receiverAddress *privacy.PaymentAddress, amount uint64) (instruction frombeaconins.InstructionFromBeacon, err error)
+	NewRewardProposalSubmitterIns(blockgen *BlockChain, receiverAddress *privacy.PaymentAddress, amount uint64) (instruction component.InstructionFromBeacon, err error)
 	GetPaymentAddressFromSubmitProposalMetadata(tx metadata.Transaction) *privacy.PaymentAddress
 	GetPaymentAddressVoter(chain *BlockChain) ([]privacy.PaymentAddress, error)
 	GetPrizeProposal() uint32
@@ -41,9 +41,21 @@ type ConstitutionHelper interface {
 	SetNewConstitution(bc *BlockChain, constitutionInfo *ConstitutionInfo, welfare int32, submitProposalTx metadata.Transaction)
 }
 
+type BuildTxForVoteFunc func(interface{}, *privacy.PrivateKey, database.DatabaseInterface, byte) (metadata.Transaction, error)
+
+var buildTxForVotes = map[int]BuildTxForVoteFunc{
+	component.RewardDCBProposalVoterIns:           buildTxRewardProposalVoterIns,
+	component.RewardGOVProposalVoterIns:           buildTxRewardProposalVoterIns,
+	component.RewardDCBProposalSubmitterIns:       buildTxRewardProposalSubmitterIns,
+	component.RewardGOVProposalSubmitterIns:       buildTxRewardProposalSubmitterIns,
+	component.ShareRewardOldDCBBoardSupportterIns: buildTxShareRewardOldBoardIns,
+	component.ShareRewardOldGOVBoardSupportterIns: buildTxShareRewardOldBoardIns,
+	component.SendBackTokenVoteBoardFailIns:       buildTxSendBackTokenVoteFailIns,
+}
+
 // func (chain *BlockChain) createRewardProposalWinnerIns(
 // 	constitutionHelper ConstitutionHelper,
-// ) ([]frombeaconins.InstructionFromBeacon, error) {
+// ) ([]component.InstructionFromBeacon, error) {
 // 	paymentAddresses, err := constitutionHelper.GetPaymentAddressVoter(chain)
 // 	var resIns frombeaconins
 // 	if err != nil {
@@ -110,11 +122,11 @@ func (self *BlockChain) BuildVoteTableAndPunishTransaction(
 
 func (self *BlockChain) createAcceptConstitutionAndRewardSubmitter(
 	helper ConstitutionHelper,
-) ([]frombeaconins.InstructionFromBeacon, error) {
+) ([]component.InstructionFromBeacon, error) {
 	currentConstitutionIndex := helper.GetConstitutionInfo(self).ConstitutionIndex
 	nextConstitutionIndex := currentConstitutionIndex + 1
 	fmt.Println("[ndh] - create accept constitution nextConstitutionIndex: ", nextConstitutionIndex)
-	resIns := make([]frombeaconins.InstructionFromBeacon, 0)
+	resIns := make([]component.InstructionFromBeacon, 0)
 	VoteTable, CountVote, err := self.BuildVoteTableAndPunishTransaction(helper, nextConstitutionIndex)
 	if err != nil {
 		fmt.Printf("[ndh] - error here %+v\n", err)
@@ -159,7 +171,7 @@ func (self *BlockChain) createAcceptConstitutionAndRewardSubmitter(
 			return resIns, nil
 		}
 		submitterPaymentAddress := privacy.NewPaymentAddressFromByte(byteTemp)
-		shardID := frombeaconins.GetShardIDFromPaymentAddressBytes(*submitterPaymentAddress)
+		shardID := component.GetShardIDFromPaymentAddressBytes(*submitterPaymentAddress)
 		acceptedProposalIns := helper.NewAcceptProposalIns(&bestProposal.TxId, VoteTable[bestProposal.TxId], shardID)
 		resIns = append(resIns, acceptedProposalIns)
 	}
@@ -197,7 +209,7 @@ func (self *BlockChain) createAcceptConstitutionAndRewardSubmitter(
 				}
 				shareRewardIns := self.CreateShareRewardOldBoardIns(helper, listVotersOfCurrentProposal[i], supporterRewardAmount, voterAndAmount[i])
 				resIns = append(resIns, shareRewardIns...)
-				rewardForVoter := frombeaconins.NewRewardProposalVoterIns(&voter, submitterRewardAmount, helper.GetBoardType())
+				rewardForVoter := component.NewRewardProposalVoterIns(&voter, submitterRewardAmount, helper.GetBoardType())
 				stringTest, _ := rewardForVoter.GetStringFormat()
 				fmt.Printf("[ndh] - reward for voter instruction: %+v\n", stringTest)
 				if rewardForVoter != nil {
@@ -215,18 +227,18 @@ func (self *BlockChain) createAcceptBoardIns(
 	boardType common.BoardType,
 	BoardPaymentAddress []privacy.PaymentAddress,
 	sumOfVote uint64,
-) ([]frombeaconins.InstructionFromBeacon, error) {
-	acceptBoardIns := frombeaconins.NewAcceptBoardIns(boardType, BoardPaymentAddress, sumOfVote)
+) ([]component.InstructionFromBeacon, error) {
+	acceptBoardIns := component.NewAcceptBoardIns(boardType, BoardPaymentAddress, sumOfVote)
 	inst, _ := acceptBoardIns.GetStringFormat()
 	fmt.Println("[ndh] -  SendBackToken to vote failed acceptBoardIns", inst)
 	if len(inst) != 0 {
-		return []frombeaconins.InstructionFromBeacon{acceptBoardIns}, nil
+		return []component.InstructionFromBeacon{acceptBoardIns}, nil
 	} else {
 		return nil, nil
 	}
 }
 
-func (stateBeacon *BestStateBeacon) UpdateDCBBoard(ins frombeaconins.AcceptDCBBoardIns) error {
+func (stateBeacon *BestStateBeacon) UpdateDCBBoard(ins component.AcceptDCBBoardIns) error {
 	stateBeacon.StabilityInfo.DCBGovernor.BoardIndex += 1
 	stateBeacon.StabilityInfo.DCBGovernor.BoardPaymentAddress = ins.BoardPaymentAddress
 	stateBeacon.StabilityInfo.DCBGovernor.StartedBlock = stateBeacon.BestBlock.Header.Height
@@ -235,7 +247,7 @@ func (stateBeacon *BestStateBeacon) UpdateDCBBoard(ins frombeaconins.AcceptDCBBo
 	return nil
 }
 
-func (stateBeacon *BestStateBeacon) UpdateGOVBoard(ins frombeaconins.AcceptGOVBoardIns) error {
+func (stateBeacon *BestStateBeacon) UpdateGOVBoard(ins component.AcceptGOVBoardIns) error {
 	stateBeacon.StabilityInfo.GOVGovernor.BoardIndex += 1
 	stateBeacon.StabilityInfo.GOVGovernor.BoardPaymentAddress = ins.BoardPaymentAddress
 	stateBeacon.StabilityInfo.GOVGovernor.StartedBlock = stateBeacon.BestBlock.Header.Height
@@ -248,14 +260,14 @@ func createSendBackTokenVoteFailIns(
 	boardType common.BoardType,
 	paymentAddress privacy.PaymentAddress,
 	amount uint64,
-) frombeaconins.InstructionFromBeacon {
+) component.InstructionFromBeacon {
 	var propertyID common.Hash
 	if boardType == common.DCBBoard {
 		propertyID = common.DCBTokenID
 	} else {
 		propertyID = common.GOVTokenID
 	}
-	return frombeaconins.NewSendBackTokenVoteFailIns(
+	return component.NewTxSendBackTokenVoteFailIns(
 		boardType,
 		paymentAddress,
 		amount,
@@ -267,7 +279,7 @@ func (self *BlockChain) createSendBackTokenAfterVoteFailIns(
 	boardType common.BoardType,
 	newGovernorList []privacy.PaymentAddress,
 	helper ConstitutionHelper,
-) ([]frombeaconins.InstructionFromBeacon, error) {
+) ([]component.InstructionFromBeacon, error) {
 	fmt.Println("[ndh]- Enter createSendBackTokenAfterVoteFailIns")
 	var propertyID common.Hash
 	if boardType == common.DCBBoard {
@@ -296,7 +308,7 @@ func (self *BlockChain) createSendBackTokenAfterVoteFailIns(
 	}
 
 	iter := self.config.DataBase.NewIterator(&searchRange, nil)
-	listNewIns := make([]frombeaconins.InstructionFromBeacon, 0)
+	listNewIns := make([]component.InstructionFromBeacon, 0)
 	for iter.Next() {
 		key := iter.Key()
 		_, boardIndex, candidatePayment, voterPaymentAddress, _ := lvdb.ParseKeyVoteBoardList(key)
@@ -304,7 +316,7 @@ func (self *BlockChain) createSendBackTokenAfterVoteFailIns(
 		amountOfToken := lvdb.ParseValueVoteBoardList(value)
 		_, found := setOfNewGovernor[string(candidatePayment)]
 		if (boardIndex == currentBoardIndex+1) && (!found) {
-			inst := frombeaconins.NewSendBackTokenVoteFailIns(
+			inst := component.NewTxSendBackTokenVoteFailIns(
 				boardType,
 				*voterPaymentAddress,
 				amountOfToken,
@@ -322,7 +334,7 @@ func (self *BlockChain) createSendBackTokenAfterVoteFailIns(
 			}
 		}
 		if boardIndex == currentBoardIndex {
-			inst := frombeaconins.NewSendBackTokenVoteFailIns(
+			inst := component.NewTxSendBackTokenVoteFailIns(
 				boardType,
 				*voterPaymentAddress,
 				amountOfToken,
@@ -358,8 +370,8 @@ func (chain *BlockChain) CreateSingleShareRewardOldBoardIns(
 	chairPaymentAddress privacy.PaymentAddress,
 	voterPaymentAddress privacy.PaymentAddress,
 	amountOfCoin uint64,
-) frombeaconins.InstructionFromBeacon {
-	return frombeaconins.NewShareRewardOldBoardMetadataIns(
+) component.InstructionFromBeacon {
+	return component.NewShareRewardOldBoardMetadataIns(
 		chairPaymentAddress, voterPaymentAddress, helper.GetBoardType(), amountOfCoin,
 	)
 }
@@ -369,8 +381,8 @@ func (chain *BlockChain) CreateShareRewardOldBoardIns(
 	chairPaymentAddress privacy.PaymentAddress,
 	totalAmountCoinReward uint64,
 	totalVoteAmount uint64,
-) []frombeaconins.InstructionFromBeacon {
-	Ins := make([]frombeaconins.InstructionFromBeacon, 0)
+) []component.InstructionFromBeacon {
+	Ins := make([]component.InstructionFromBeacon, 0)
 	boardIndex := chain.GetCurrentBoardIndex(helper)
 	fmt.Printf("[ndh] ------------------- Create Share Reward Old Board Ins to %+v %+v\n", chairPaymentAddress, totalAmountCoinReward)
 	voterList := chain.config.DataBase.GetBoardVoterList(helper.GetBoardType(), chairPaymentAddress, boardIndex)
@@ -395,8 +407,8 @@ func (chain *BlockChain) CreateShareRewardOldBoardIns(
 
 func (self *BlockChain) CreateUpdateNewGovernorInstruction(
 	helper ConstitutionHelper,
-) ([]frombeaconins.InstructionFromBeacon, error) {
-	instructions := make([]frombeaconins.InstructionFromBeacon, 0)
+) ([]component.InstructionFromBeacon, error) {
+	instructions := make([]component.InstructionFromBeacon, 0)
 	newBoardList, err := self.config.DataBase.GetTopMostVoteGovernor(helper.GetBoardType(), self.GetCurrentBoardIndex(helper)+1)
 	fmt.Println("[ndh] - SendBackToken to vote failed Enter function")
 	if err != nil {
@@ -523,7 +535,7 @@ func (chain *BlockChain) neededNewConstitution(helper ConstitutionHelper) bool {
 
 func (self *BlockChain) generateVotingInstructionWOIns(helper ConstitutionHelper) ([][]string, error) {
 
-	instructions := make([]frombeaconins.InstructionFromBeacon, 0)
+	instructions := make([]component.InstructionFromBeacon, 0)
 	fmt.Println("[ndh]-Enter generateVotingInstructionWOIns")
 	if self.neededFirstNewGovernor(helper) {
 		fmt.Println("[ndh]-[neededNewGovernor]-Create first instruction")

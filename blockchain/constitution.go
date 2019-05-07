@@ -102,7 +102,7 @@ func (helper DCBConstitutionHelper) NewAcceptProposalIns(
 	txId *common.Hash,
 	voters []privacy.PaymentAddress,
 	shardID byte,
-) frombeaconins.InstructionFromBeacon {
+) component.InstructionFromBeacon {
 	ins := frombeaconins.NewAcceptProposalIns(helper.GetBoardType(), *txId, voters, shardID)
 	return ins
 }
@@ -111,16 +111,16 @@ func (helper GOVConstitutionHelper) NewAcceptProposalIns(
 	txId *common.Hash,
 	voters []privacy.PaymentAddress,
 	shardID byte,
-) frombeaconins.InstructionFromBeacon {
+) component.InstructionFromBeacon {
 	ins := frombeaconins.NewAcceptProposalIns(helper.GetBoardType(), *txId, voters, shardID)
 	return ins
 }
 
-func (helper DCBConstitutionHelper) NewKeepOldProposalIns() frombeaconins.InstructionFromBeacon {
+func (helper DCBConstitutionHelper) NewKeepOldProposalIns() component.InstructionFromBeacon {
 	return frombeaconins.NewKeepOldProposalIns(common.DCBBoard)
 }
 
-func (helper GOVConstitutionHelper) NewKeepOldProposalIns() frombeaconins.InstructionFromBeacon {
+func (helper GOVConstitutionHelper) NewKeepOldProposalIns() component.InstructionFromBeacon {
 	return frombeaconins.NewKeepOldProposalIns(common.GOVBoard)
 }
 
@@ -132,20 +132,20 @@ func (helper GOVConstitutionHelper) GetBoardType() common.BoardType {
 	return common.GOVBoard
 }
 
-func (helper DCBConstitutionHelper) NewRewardProposalSubmitterIns(chain *BlockChain, receiverAddress *privacy.PaymentAddress, amount uint64) (frombeaconins.InstructionFromBeacon, error) {
+func (helper DCBConstitutionHelper) NewRewardProposalSubmitterIns(chain *BlockChain, receiverAddress *privacy.PaymentAddress, amount uint64) (component.InstructionFromBeacon, error) {
 	// rewardProposalSubmitter := (chain.BestState.Beacon.StabilityInfo.BankFund / 10)
 	// if rewardProposalSubmitter == 0 {
 	// 	return nil, errors.New("[ndh] - Not enough BankFund")
 	// }
-	return frombeaconins.NewRewardProposalSubmitterIns(receiverAddress, amount, common.DCBBoard), nil
+	return component.NewRewardProposalSubmitterIns(receiverAddress, amount, common.DCBBoard), nil
 }
 
-func (helper GOVConstitutionHelper) NewRewardProposalSubmitterIns(chain *BlockChain, receiverAddress *privacy.PaymentAddress, amount uint64) (frombeaconins.InstructionFromBeacon, error) {
+func (helper GOVConstitutionHelper) NewRewardProposalSubmitterIns(chain *BlockChain, receiverAddress *privacy.PaymentAddress, amount uint64) (component.InstructionFromBeacon, error) {
 	// rewardProposalSubmitter := (chain.BestState.Beacon.StabilityInfo.SalaryFund / 10)
 	// if rewardProposalSubmitter == 0 {
 	// 	return nil, errors.New("[ndh] - Not enough SalaryFund")
 	// }
-	ins := frombeaconins.NewRewardProposalSubmitterIns(receiverAddress, amount, common.GOVBoard)
+	ins := component.NewRewardProposalSubmitterIns(receiverAddress, amount, common.GOVBoard)
 	return ins, nil
 }
 

@@ -113,7 +113,7 @@ func createGOVGenesisBoardInst() []string {
 	// 	Tk: []byte{2, 58, 116, 58, 73, 55, 129, 154, 193, 197, 40, 130, 50, 242, 99, 84, 59, 31, 107, 85, 68, 234, 250, 118, 66, 188, 15, 139, 89, 254, 12, 38, 211},
 	// }
 	boardAddress := []privacy.PaymentAddress{}
-	govBoardInst := &frombeaconins.AcceptGOVBoardIns{
+	govBoardInst := &component.AcceptGOVBoardIns{
 		BoardPaymentAddress: boardAddress,
 		StartAmountToken:    0,
 	}
@@ -200,7 +200,7 @@ func createDCBGenesisBoardInst() []string {
 		// },
 	}
 
-	dcbBoardInst := &frombeaconins.AcceptDCBBoardIns{
+	dcbBoardInst := &component.AcceptDCBBoardIns{
 		BoardPaymentAddress: boardAddress,
 		StartAmountToken:    0,
 	}

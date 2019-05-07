@@ -93,18 +93,18 @@ func (submitDCBProposalMetadata *SubmitDCBProposalMetadata) ValidateTxWithBlockC
 	if !submitDCBProposalMetadata.SubmitProposalInfo.ValidateTxWithBlockChain(common.DCBBoard, chainID, db) {
 		return false, errors.Errorf("SubmitProposalInfo invalid")
 	}
-	senderAddress, err := tx.GetSenderPaymentAddress()
-	if err != nil {
-		return false, err
-	}
+	// senderAddress, err := tx.GetSenderPaymentAddress()
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	if senderAddress != nil {
-		return false, errors.New("Can not get sender address")
-	}
+	// if senderAddress == nil {
+	// 	return false, errors.New("Can not get sender address")
+	// }
 
-	if common.ByteEqual(senderAddress.Bytes(), submitDCBProposalMetadata.SubmitProposalInfo.PaymentAddress.Bytes()) {
-		return false, errors.New("PaymentAddress in submitproposal info must be SenderAddress")
-	}
+	// if common.ByteEqual(senderAddress.Bytes(), submitDCBProposalMetadata.SubmitProposalInfo.PaymentAddress.Bytes()) {
+	// 	return false, errors.New("PaymentAddress in submitproposal info must be SenderAddress")
+	// }
 
 	// TODO(@0xbunyip): validate DCBParams: LoanParams, etc
 
@@ -245,18 +245,18 @@ func (submitGOVProposalMetadata *SubmitGOVProposalMetadata) ValidateTxWithBlockC
 		}
 	}
 
-	senderAddress, err := tx.GetSenderPaymentAddress()
-	if err != nil {
-		return false, err
-	}
+	// senderAddress, err := tx.GetSenderPaymentAddress()
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	if senderAddress != nil {
-		return false, errors.New("Can not get sender address")
-	}
+	// if senderAddress == nil {
+	// 	return false, errors.New("Can not get sender address")
+	// }
 
-	if common.ByteEqual(senderAddress.Bytes(), submitGOVProposalMetadata.SubmitProposalInfo.PaymentAddress.Bytes()) {
-		return false, errors.New("PaymentAddress in submitproposal info must be SenderAddress")
-	}
+	// if common.ByteEqual(senderAddress.Bytes(), submitGOVProposalMetadata.SubmitProposalInfo.PaymentAddress.Bytes()) {
+	// 	return false, errors.New("PaymentAddress in submitproposal info must be SenderAddress")
+	// }
 
 	sellingGOVTokens := govParams.SellingGOVTokens
 	if sellingGOVTokens != nil {

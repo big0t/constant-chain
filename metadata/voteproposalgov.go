@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
@@ -22,6 +23,7 @@ type GOVVoteProposalMetadata struct {
 func (govVoteProposalMetadata *GOVVoteProposalMetadata) ValidateSanityData(bcr BlockchainRetriever, tx Transaction) (bool, bool, error) {
 	rightConstitutionIndex := bcr.GetConstitution(common.GOVBoard).GetConstitutionIndex() + 1
 	if govVoteProposalMetadata.VoteProposalMetadata.ConstitutionIndex != rightConstitutionIndex {
+		fmt.Printf("[ndh] - Wrong constitution index, right constitution index is %+v\n", rightConstitutionIndex)
 		return true, false, errors.New("Wrong constitution index")
 	}
 	return true, true, nil

@@ -33,9 +33,9 @@ func (bsb *BestStateBeacon) processStabilityInstruction(inst []string) error {
 		return bsb.processLoanRequestInstruction(inst)
 	case strconv.Itoa(metadata.LoanResponseMeta):
 		return bsb.processLoanResponseInstruction(inst)
-	case strconv.Itoa(component.AcceptDCBBoardIns):
+	case strconv.Itoa(component.AcceptDCBBoardInsType):
 		fmt.Println("[ndh] - Accept DCB Board intruction", inst)
-		acceptDCBBoardIns := frombeaconins.AcceptDCBBoardIns{}
+		acceptDCBBoardIns := component.AcceptDCBBoardIns{}
 		err := json.Unmarshal([]byte(inst[2]), &acceptDCBBoardIns)
 		if err != nil {
 			fmt.Println("[ndh] - Accept DCB Board intruction ERRORRRRRRRRRRRRRRR", err)
@@ -46,9 +46,9 @@ func (bsb *BestStateBeacon) processStabilityInstruction(inst []string) error {
 			fmt.Println("[ndh] - Accept DCB Board intruction ERRORRRRRRRRRRRRRRR2", err)
 			return err
 		}
-	case strconv.Itoa(component.AcceptGOVBoardIns):
+	case strconv.Itoa(component.AcceptGOVBoardInsType):
 		fmt.Println("[ndh] - Accept GOV Board intruction", inst)
-		acceptGOVBoardIns := frombeaconins.AcceptGOVBoardIns{}
+		acceptGOVBoardIns := component.AcceptGOVBoardIns{}
 		err := json.Unmarshal([]byte(inst[2]), &acceptGOVBoardIns)
 		if err != nil {
 			fmt.Println("[ndh] - Accept GOV Board intruction ERRORRRRRRRRRRRRRRR", err)
@@ -60,28 +60,28 @@ func (bsb *BestStateBeacon) processStabilityInstruction(inst []string) error {
 			return err
 		}
 	case strconv.Itoa(component.ShareRewardOldDCBBoardSupportterIns):
-		ShareRewardOldDCBBoardSupportterIns := frombeaconins.ShareRewardOldBoardIns{}
+		ShareRewardOldDCBBoardSupportterIns := component.ShareRewardOldBoardIns{}
 		err := json.Unmarshal([]byte(inst[2]), &ShareRewardOldDCBBoardSupportterIns)
 		if err != nil {
 			return err
 		}
 		bsb.UpdateDCBFund(-int64(ShareRewardOldDCBBoardSupportterIns.AmountOfCoin))
 	case strconv.Itoa(component.ShareRewardOldGOVBoardSupportterIns):
-		ShareRewardOldGOVBoardSupportterIns := frombeaconins.ShareRewardOldBoardIns{}
+		ShareRewardOldGOVBoardSupportterIns := component.ShareRewardOldBoardIns{}
 		err := json.Unmarshal([]byte(inst[2]), &ShareRewardOldGOVBoardSupportterIns)
 		if err != nil {
 			return err
 		}
 		bsb.UpdateGOVFund(-int64(ShareRewardOldGOVBoardSupportterIns.AmountOfCoin))
 	case strconv.Itoa(component.RewardDCBProposalSubmitterIns):
-		rewardDCBProposalSubmitterIns := frombeaconins.RewardProposalSubmitterIns{}
+		rewardDCBProposalSubmitterIns := component.RewardProposalSubmitterIns{}
 		err := json.Unmarshal([]byte(inst[2]), &rewardDCBProposalSubmitterIns)
 		if err != nil {
 			return err
 		}
 		bsb.UpdateDCBFund(-int64(rewardDCBProposalSubmitterIns.Amount))
 	case strconv.Itoa(component.RewardGOVProposalSubmitterIns):
-		rewardGOVProposalSubmitterIns := frombeaconins.RewardProposalSubmitterIns{}
+		rewardGOVProposalSubmitterIns := component.RewardProposalSubmitterIns{}
 		err := json.Unmarshal([]byte(inst[2]), &rewardGOVProposalSubmitterIns)
 		if err != nil {
 			return err

@@ -9,10 +9,10 @@ const (
 	VoteBoardIns             //5
 	SubmitProposalIns        //6
 
-	AcceptDCBProposalIns //7
-	AcceptDCBBoardIns    //8
-	AcceptGOVProposalIns //9
-	AcceptGOVBoardIns    //10
+	AcceptDCBProposalIns  //7
+	AcceptDCBBoardInsType //8
+	AcceptGOVProposalIns  //9
+	AcceptGOVBoardInsType //10
 
 	RewardDCBProposalSubmitterIns       //11
 	RewardGOVProposalSubmitterIns       //12
@@ -20,12 +20,13 @@ const (
 	ShareRewardOldGOVBoardSupportterIns //14
 	SendBackTokenVoteBoardFailIns       //15
 
-	ConfirmBuySellRequestMeta //16
-	ConfirmBuyBackRequestMeta //17
-	RewardDCBProposalVoterIns //18
-	RewardGOVProposalVoterIns //19
-	KeepOldDCBProposalIns     //20
-	KeepOldGOVProposalIns     //21
+	ConfirmBuySellRequestMeta      //16
+	ConfirmBuyBackRequestMeta      //17
+	RewardDCBProposalVoterIns      //18
+	RewardGOVProposalVoterIns      //19
+	KeepOldDCBProposalIns          //20
+	KeepOldGOVProposalIns          //21
+	SendBackTokenToOldSupporterIns //22
 )
 
 const (
