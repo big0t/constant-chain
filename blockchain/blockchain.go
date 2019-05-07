@@ -1490,13 +1490,13 @@ func (bc *BlockChain) processKeepOldDCBConstitutionIns(inst []string) error {
 	constitution := bc.GetConstitution(boardType)
 	nextConstitutionIndex := constitution.GetConstitutionIndex() + 1
 	newConstitution := bc.GetConstitution(boardType).(DCBConstitution)
-	currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
+	// currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
 	if err != nil {
 		fmt.Printf("[ndh] errorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr %+v\n", err)
 		return err
 	}
-	key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
-	bc.GetDatabase().Put(key, []byte{0})
+	// key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
+	// bc.GetDatabase().Put(key, []byte{0})
 	err = bc.GetDatabase().SetNewProposalWinningVoter(
 		boardType,
 		nextConstitutionIndex,
@@ -1523,13 +1523,13 @@ func (bc *BlockChain) processKeepOldGOVConstitutionIns(inst []string) error {
 	constitution := bc.GetConstitution(boardType)
 	nextConstitutionIndex := constitution.GetConstitutionIndex() + 1
 	newConstitution := bc.GetConstitution(boardType).(GOVConstitution)
-	currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
+	// currentProposalTxID, err := bc.GetDatabase().GetProposalTXIDByConstitutionIndex(boardType, constitution.GetConstitutionIndex())
 	if err != nil {
 		fmt.Printf("[ndh] errorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr %+v\n", err)
 		return err
 	}
-	key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
-	bc.GetDatabase().Put(key, []byte{0})
+	// key := lvdb.GetKeySubmitProposal(boardType, constitution.GetConstitutionIndex()+1, currentProposalTxID)
+	// bc.GetDatabase().Put(key, []byte{0})
 	err = bc.GetDatabase().SetNewProposalWinningVoter(
 		boardType,
 		nextConstitutionIndex,
