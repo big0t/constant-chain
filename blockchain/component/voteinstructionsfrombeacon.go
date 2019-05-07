@@ -14,6 +14,13 @@ type AcceptDCBBoardIns struct {
 	StartAmountToken    uint64
 }
 
+type AcceptProposalIns struct {
+	BoardType common.BoardType
+	TxID      common.Hash
+	Voters    []privacy.PaymentAddress
+	ShardID   byte
+}
+
 type AcceptGOVBoardIns struct {
 	BoardPaymentAddress []privacy.PaymentAddress
 	StartAmountToken    uint64
@@ -50,4 +57,20 @@ type TxSendBackTokenToOldSupporterIns struct {
 	PaymentAddress privacy.PaymentAddress
 	Amount         uint64
 	PropertyID     common.Hash
+}
+
+type KeepOldProposalIns struct {
+	BoardType common.BoardType
+}
+
+type UpdateDCBConstitutionIns struct {
+	SubmitProposalInfo SubmitProposalInfo
+	DCBParams          DCBParams
+	Voters             []privacy.PaymentAddress
+}
+
+type UpdateGOVConstitutionIns struct {
+	SubmitProposalInfo SubmitProposalInfo
+	GOVParams          GOVParams
+	Voters             []privacy.PaymentAddress
 }

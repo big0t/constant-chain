@@ -17,7 +17,6 @@ import (
 	"github.com/constant-money/constant-chain/database"
 	"github.com/constant-money/constant-chain/database/lvdb"
 	"github.com/constant-money/constant-chain/metadata"
-	"github.com/constant-money/constant-chain/metadata/frombeaconins"
 	"github.com/constant-money/constant-chain/privacy"
 	"github.com/constant-money/constant-chain/transaction"
 	libp2p "github.com/libp2p/go-libp2p-peer"
@@ -1405,7 +1404,7 @@ func (blockchain *BlockChain) IsReady(shard bool, shardID byte) bool {
 }
 
 func (bc *BlockChain) processUpdateDCBConstitutionIns(inst []string) error {
-	updateConstitutionIns, err := frombeaconins.NewUpdateDCBConstitutionInsFromStr(inst)
+	updateConstitutionIns, err := component.NewUpdateDCBConstitutionInsFromStr(inst)
 	if err != nil {
 		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
 		return err
@@ -1435,7 +1434,7 @@ func (bc *BlockChain) processUpdateDCBConstitutionIns(inst []string) error {
 }
 
 func (bc *BlockChain) processUpdateGOVConstitutionIns(inst []string) error {
-	updateConstitutionIns, err := frombeaconins.NewUpdateGOVConstitutionInsFromStr(inst)
+	updateConstitutionIns, err := component.NewUpdateGOVConstitutionInsFromStr(inst)
 	if err != nil {
 		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
 		return err
@@ -1481,7 +1480,7 @@ func (bc *BlockChain) processUpdateGOVConstitutionIns(inst []string) error {
 }
 
 func (bc *BlockChain) processKeepOldDCBConstitutionIns(inst []string) error {
-	keepOldProposalIns, err := frombeaconins.NewKeepOldProposalInsFromStr(inst)
+	keepOldProposalIns, err := component.NewKeepOldProposalInsFromStr(inst)
 	if err != nil {
 		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
 		return err
@@ -1515,7 +1514,7 @@ func (bc *BlockChain) processKeepOldDCBConstitutionIns(inst []string) error {
 }
 
 func (bc *BlockChain) processKeepOldGOVConstitutionIns(inst []string) error {
-	keepOldProposalIns, err := frombeaconins.NewKeepOldProposalInsFromStr(inst)
+	keepOldProposalIns, err := component.NewKeepOldProposalInsFromStr(inst)
 	if err != nil {
 		fmt.Printf("[ndh] - Error here, don't know why. %+v\n", err)
 		return err

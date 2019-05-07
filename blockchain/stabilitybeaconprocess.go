@@ -10,7 +10,6 @@ import (
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
 	"github.com/constant-money/constant-chain/metadata"
-	"github.com/constant-money/constant-chain/metadata/frombeaconins"
 	"github.com/pkg/errors"
 )
 
@@ -382,7 +381,7 @@ func (bsb *BestStateBeacon) processLoanResponseInstruction(inst []string) error 
 	return nil
 }
 
-func (bsb *BestStateBeacon) processUpdateDCBProposalInstruction(ins frombeaconins.UpdateDCBConstitutionIns) error {
+func (bsb *BestStateBeacon) processUpdateDCBProposalInstruction(ins component.UpdateDCBConstitutionIns) error {
 	dcbParams := ins.DCBParams
 	oldConstitution := bsb.StabilityInfo.DCBConstitution
 	fmt.Printf("[ndh] - - - - - - - - - - - - old Constitution Index %+v \n", oldConstitution)
@@ -412,7 +411,7 @@ func (bsb *BestStateBeacon) processUpdateDCBProposalInstruction(ins frombeaconin
 	return nil
 }
 
-func (bsb *BestStateBeacon) processKeepOldDCBProposalInstruction(ins frombeaconins.KeepOldProposalIns) error {
+func (bsb *BestStateBeacon) processKeepOldDCBProposalInstruction(ins component.KeepOldProposalIns) error {
 	if ins.BoardType != common.DCBBoard {
 		return errors.New("Wrong board type!")
 	}
@@ -428,11 +427,10 @@ func (bsb *BestStateBeacon) processKeepOldDCBProposalInstruction(ins frombeaconi
 		CurrentDCBNationalWelfare: GetOracleDCBNationalWelfare(),
 		DCBParams:                 oldConstitution.DCBParams,
 	}
-	//TODO @dbchiem
 	return nil
 }
 
-func (bsb *BestStateBeacon) processUpdateGOVProposalInstruction(ins frombeaconins.UpdateGOVConstitutionIns) error {
+func (bsb *BestStateBeacon) processUpdateGOVProposalInstruction(ins component.UpdateGOVConstitutionIns) error {
 	oldConstitution := bsb.StabilityInfo.GOVConstitution
 	fmt.Printf("[ndh] - - - - - - - - - - - - old Constitution Index %+v \n", oldConstitution)
 	bsb.StabilityInfo.GOVConstitution = GOVConstitution{
@@ -452,7 +450,7 @@ func (bsb *BestStateBeacon) processUpdateGOVProposalInstruction(ins frombeaconin
 	return nil
 }
 
-func (bsb *BestStateBeacon) processKeepOldGOVProposalInstruction(ins frombeaconins.KeepOldProposalIns) error {
+func (bsb *BestStateBeacon) processKeepOldGOVProposalInstruction(ins component.KeepOldProposalIns) error {
 	if ins.BoardType != common.GOVBoard {
 		return errors.New("Wrong board type!")
 	}
@@ -583,9 +581,9 @@ func (bc *BlockChain) updateStabilityLocalState(block *BeaconBlock) error {
 		case strconv.Itoa(metadata.LoanPaymentMeta):
 			err = bc.processLoanPaymentInstruction(inst)
 
-		case strconv.Itoa(component.UpdateDCBConstitutionIns):
+		case strconv.Itoa(component.UpdateDCBConstitutionInsType):
 			err = bc.processUpdateDCBConstitutionIns(inst)
-		case strconv.Itoa(component.UpdateGOVConstitutionIns):
+		case strconv.Itoa(component.UpdateGOVConstitutionInsType):
 			err = bc.processUpdateGOVConstitutionIns(inst)
 
 		case strconv.Itoa(component.KeepOldDCBProposalIns):

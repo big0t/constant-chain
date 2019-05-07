@@ -9,7 +9,6 @@ import (
 	"github.com/constant-money/constant-chain/common"
 	"github.com/constant-money/constant-chain/database/lvdb"
 	"github.com/constant-money/constant-chain/metadata"
-	"github.com/constant-money/constant-chain/metadata/frombeaconins"
 	"github.com/constant-money/constant-chain/metadata/fromshardins"
 	"github.com/constant-money/constant-chain/privacy"
 	"github.com/constant-money/constant-chain/transaction"
@@ -105,8 +104,8 @@ func buildStabilityActions(
 				continue
 			}
 			switch metaType {
-			case component.AcceptDCBProposalIns, component.AcceptGOVProposalIns:
-				acceptProposalIns := frombeaconins.AcceptProposalIns{}
+			case component.AcceptDCBProposalInsType, component.AcceptGOVProposalInsType:
+				acceptProposalIns := component.AcceptProposalIns{}
 				err := json.Unmarshal([]byte(l[2]), &acceptProposalIns)
 				if err != nil {
 					fmt.Println("[ndh] - error 1 ", err.Error())
@@ -124,8 +123,8 @@ func buildStabilityActions(
 					fmt.Printf("[ndh] - instructions from beacon to shard metaType: %+v\n", l)
 				}
 				switch metaType {
-				case component.AcceptDCBProposalIns:
-					acceptProposalIns := frombeaconins.AcceptProposalIns{}
+				case component.AcceptDCBProposalInsType:
+					acceptProposalIns := component.AcceptProposalIns{}
 					err := json.Unmarshal([]byte(l[2]), &acceptProposalIns)
 					if err != nil {
 						fmt.Println("[ndh] - error 1 ", err.Error())
@@ -144,8 +143,8 @@ func buildStabilityActions(
 						return nil, err
 					}
 					fmt.Println("[ndh] - new instructions AcceptProposalIns: ", newIns)
-				case component.AcceptGOVProposalIns:
-					acceptProposalIns := frombeaconins.AcceptProposalIns{}
+				case component.AcceptGOVProposalInsType:
+					acceptProposalIns := component.AcceptProposalIns{}
 					err := json.Unmarshal([]byte(l[2]), &acceptProposalIns)
 					if err != nil {
 						return nil, err
@@ -279,7 +278,7 @@ func buildUpdateConstitutionIns(inst string, boardType common.BoardType) ([][]st
 		if err != nil {
 			return nil, err
 		}
-		newInst, err = frombeaconins.NewUpdateDCBConstitutionIns(
+		newInst, err = component.NewUpdateDCBConstitutionIns(
 			newConstitutionIns.SubmitProposalInfo,
 			newConstitutionIns.DCBParams,
 			newConstitutionIns.Voters,
@@ -293,7 +292,7 @@ func buildUpdateConstitutionIns(inst string, boardType common.BoardType) ([][]st
 		if err != nil {
 			return nil, err
 		}
-		newInst, err = frombeaconins.NewUpdateGOVConstitutionIns(
+		newInst, err = component.NewUpdateGOVConstitutionIns(
 			newConstitutionIns.SubmitProposalInfo,
 			newConstitutionIns.GOVParams,
 			newConstitutionIns.Voters,

@@ -1,18 +1,18 @@
 package component
 
 const (
-	VoteProposalIns          = 100 + iota
-	NewDCBConstitutionIns    //1
-	NewGOVConstitutionIns    //2
-	UpdateDCBConstitutionIns //3
-	UpdateGOVConstitutionIns //4
-	VoteBoardIns             //5
-	SubmitProposalIns        //6
+	VoteProposalIns              = 100 + iota
+	NewDCBConstitutionIns        //1
+	NewGOVConstitutionIns        //2
+	UpdateDCBConstitutionInsType //3
+	UpdateGOVConstitutionInsType //4
+	VoteBoardIns                 //5
+	SubmitProposalIns            //6
 
-	AcceptDCBProposalIns  //7
-	AcceptDCBBoardInsType //8
-	AcceptGOVProposalIns  //9
-	AcceptGOVBoardInsType //10
+	AcceptDCBProposalInsType //7
+	AcceptDCBBoardInsType    //8
+	AcceptGOVProposalInsType //9
+	AcceptGOVBoardInsType    //10
 
 	RewardDCBProposalSubmitterIns       //11
 	RewardGOVProposalSubmitterIns       //12

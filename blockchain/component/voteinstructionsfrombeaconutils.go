@@ -8,20 +8,56 @@ import (
 	"github.com/constant-money/constant-chain/privacy"
 )
 
-func NewTxSendBackTokenToOldSupporterIns(boardType common.BoardType, paymentAddress privacy.PaymentAddress, amount uint64, propertyID common.Hash) *TxSendBackTokenToOldSupporterIns {
-	return &TxSendBackTokenToOldSupporterIns{BoardType: boardType, PaymentAddress: paymentAddress, Amount: amount, PropertyID: propertyID}
+func NewTxSendBackTokenToOldSupporterIns(
+	boardType common.BoardType,
+	paymentAddress privacy.PaymentAddress,
+	amount uint64,
+	propertyID common.Hash,
+) *TxSendBackTokenToOldSupporterIns {
+	return &TxSendBackTokenToOldSupporterIns{
+		BoardType:      boardType,
+		PaymentAddress: paymentAddress,
+		Amount:         amount,
+		PropertyID:     propertyID,
+	}
 }
 
-func NewTxSendBackTokenVoteFailIns(boardType common.BoardType, paymentAddress privacy.PaymentAddress, amount uint64, propertyID common.Hash) *TxSendBackTokenVoteFailIns {
-	return &TxSendBackTokenVoteFailIns{BoardType: boardType, PaymentAddress: paymentAddress, Amount: amount, PropertyID: propertyID}
+func NewTxSendBackTokenVoteFailIns(
+	boardType common.BoardType,
+	paymentAddress privacy.PaymentAddress,
+	amount uint64,
+	propertyID common.Hash,
+) *TxSendBackTokenVoteFailIns {
+	return &TxSendBackTokenVoteFailIns{
+		BoardType:      boardType,
+		PaymentAddress: paymentAddress,
+		Amount:         amount,
+		PropertyID:     propertyID,
+	}
 }
 
-func NewRewardProposalSubmitterIns(receiverAddress *privacy.PaymentAddress, amount uint64, boardType common.BoardType) *RewardProposalSubmitterIns {
-	return &RewardProposalSubmitterIns{ReceiverAddress: receiverAddress, Amount: amount, BoardType: boardType}
+func NewRewardProposalSubmitterIns(
+	receiverAddress *privacy.PaymentAddress,
+	amount uint64,
+	boardType common.BoardType,
+) *RewardProposalSubmitterIns {
+	return &RewardProposalSubmitterIns{
+		ReceiverAddress: receiverAddress,
+		Amount:          amount,
+		BoardType:       boardType,
+	}
 }
 
-func NewRewardProposalVoterIns(receiverAddress *privacy.PaymentAddress, amount uint64, boardType common.BoardType) *RewardProposalVoterIns {
-	return &RewardProposalVoterIns{ReceiverAddress: receiverAddress, Amount: amount, BoardType: boardType}
+func NewRewardProposalVoterIns(
+	receiverAddress *privacy.PaymentAddress,
+	amount uint64,
+	boardType common.BoardType,
+) *RewardProposalVoterIns {
+	return &RewardProposalVoterIns{
+		ReceiverAddress: receiverAddress,
+		Amount:          amount,
+		BoardType:       boardType,
+	}
 }
 
 func NewShareRewardOldBoardMetadataIns(
@@ -74,6 +110,79 @@ func NewAcceptGOVBoardIns(
 		BoardPaymentAddress: boardPaymentAddress,
 		StartAmountToken:    startAmountToken,
 	}
+}
+
+func NewAcceptProposalIns(
+	boardType common.BoardType,
+	txID common.Hash,
+	voters []privacy.PaymentAddress,
+	shardID byte,
+) *AcceptProposalIns {
+	return &AcceptProposalIns{
+		BoardType: boardType,
+		TxID:      txID,
+		Voters:    voters,
+		ShardID:   shardID,
+	}
+}
+
+func NewKeepOldProposalIns(
+	boardType common.BoardType,
+) *KeepOldProposalIns {
+	return &KeepOldProposalIns{
+		BoardType: boardType,
+	}
+}
+
+func NewUpdateDCBConstitutionIns(
+	submitProposalInfo SubmitProposalInfo,
+	DCBParams DCBParams,
+	voters []privacy.PaymentAddress,
+) *UpdateDCBConstitutionIns {
+	return &UpdateDCBConstitutionIns{
+		SubmitProposalInfo: submitProposalInfo,
+		DCBParams:          DCBParams,
+		Voters:             voters,
+	}
+}
+
+func NewUpdateGOVConstitutionIns(
+	submitProposalInfo SubmitProposalInfo,
+	GOVParams GOVParams,
+	voters []privacy.PaymentAddress,
+) *UpdateGOVConstitutionIns {
+	return &UpdateGOVConstitutionIns{
+		SubmitProposalInfo: submitProposalInfo,
+		GOVParams:          GOVParams,
+		Voters:             voters,
+	}
+}
+
+func NewUpdateDCBConstitutionInsFromStr(inst []string) (*UpdateDCBConstitutionIns, error) {
+	updateDCBConstitutionIns := &UpdateDCBConstitutionIns{}
+	err := json.Unmarshal([]byte(inst[2]), updateDCBConstitutionIns)
+	if err != nil {
+		return nil, err
+	}
+	return updateDCBConstitutionIns, nil
+}
+
+func NewKeepOldProposalInsFromStr(inst []string) (*KeepOldProposalIns, error) {
+	keepOldProposalIns := &KeepOldProposalIns{}
+	err := json.Unmarshal([]byte(inst[2]), keepOldProposalIns)
+	if err != nil {
+		return nil, err
+	}
+	return keepOldProposalIns, nil
+}
+
+func NewUpdateGOVConstitutionInsFromStr(inst []string) (*UpdateGOVConstitutionIns, error) {
+	updateGOVConstitutionIns := &UpdateGOVConstitutionIns{}
+	err := json.Unmarshal([]byte(inst[2]), updateGOVConstitutionIns)
+	if err != nil {
+		return nil, err
+	}
+	return updateGOVConstitutionIns, nil
 }
 
 func (acceptDCBBoardIns *AcceptDCBBoardIns) GetStringFormat() ([]string, error) {
@@ -179,6 +288,66 @@ func (rewardProposalVoterIns RewardProposalVoterIns) GetStringFormat() ([]string
 	return []string{
 		strconv.Itoa(metadataType),
 		strconv.Itoa(int(shardID)),
+		string(content),
+	}, nil
+}
+
+func (updateDCBConstitutionIns *UpdateDCBConstitutionIns) GetStringFormat() ([]string, error) {
+	content, err := json.Marshal(updateDCBConstitutionIns)
+	if err != nil {
+		return nil, err
+	}
+	return []string{
+		strconv.Itoa(UpdateDCBConstitutionInsType),
+		strconv.Itoa(AllShards),
+		string(content),
+	}, nil
+}
+
+func (updateGOVConstitutionIns *UpdateGOVConstitutionIns) GetStringFormat() ([]string, error) {
+	content, err := json.Marshal(updateGOVConstitutionIns)
+	if err != nil {
+		return nil, err
+	}
+	return []string{
+		strconv.Itoa(UpdateGOVConstitutionInsType),
+		strconv.Itoa(AllShards),
+		string(content),
+	}, nil
+}
+
+func (acceptProposalIns AcceptProposalIns) GetStringFormat() ([]string, error) {
+	content, err := json.Marshal(acceptProposalIns)
+	if err != nil {
+		return nil, err
+	}
+	var t int
+	if acceptProposalIns.BoardType == common.DCBBoard {
+		t = AcceptDCBProposalInsType
+	} else {
+		t = AcceptGOVProposalInsType
+	}
+	return []string{
+		strconv.Itoa(t),
+		strconv.Itoa(int(acceptProposalIns.ShardID)),
+		string(content),
+	}, nil
+}
+
+func (keepOldProposalIns KeepOldProposalIns) GetStringFormat() ([]string, error) {
+	content, err := json.Marshal(keepOldProposalIns)
+	if err != nil {
+		return nil, err
+	}
+	var t int
+	if keepOldProposalIns.BoardType == common.DCBBoard {
+		t = KeepOldDCBProposalIns
+	} else {
+		t = KeepOldGOVProposalIns
+	}
+	return []string{
+		strconv.Itoa(t),
+		strconv.Itoa(AllShards),
 		string(content),
 	}, nil
 }

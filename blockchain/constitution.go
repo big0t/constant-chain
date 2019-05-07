@@ -7,7 +7,6 @@ import (
 	"github.com/constant-money/constant-chain/common"
 	"github.com/constant-money/constant-chain/database/lvdb"
 	"github.com/constant-money/constant-chain/metadata"
-	"github.com/constant-money/constant-chain/metadata/frombeaconins"
 	"github.com/constant-money/constant-chain/privacy"
 )
 
@@ -103,7 +102,7 @@ func (helper DCBConstitutionHelper) NewAcceptProposalIns(
 	voters []privacy.PaymentAddress,
 	shardID byte,
 ) component.InstructionFromBeacon {
-	ins := frombeaconins.NewAcceptProposalIns(helper.GetBoardType(), *txId, voters, shardID)
+	ins := component.NewAcceptProposalIns(helper.GetBoardType(), *txId, voters, shardID)
 	return ins
 }
 
@@ -112,16 +111,16 @@ func (helper GOVConstitutionHelper) NewAcceptProposalIns(
 	voters []privacy.PaymentAddress,
 	shardID byte,
 ) component.InstructionFromBeacon {
-	ins := frombeaconins.NewAcceptProposalIns(helper.GetBoardType(), *txId, voters, shardID)
+	ins := component.NewAcceptProposalIns(helper.GetBoardType(), *txId, voters, shardID)
 	return ins
 }
 
 func (helper DCBConstitutionHelper) NewKeepOldProposalIns() component.InstructionFromBeacon {
-	return frombeaconins.NewKeepOldProposalIns(common.DCBBoard)
+	return component.NewKeepOldProposalIns(common.DCBBoard)
 }
 
 func (helper GOVConstitutionHelper) NewKeepOldProposalIns() component.InstructionFromBeacon {
-	return frombeaconins.NewKeepOldProposalIns(common.GOVBoard)
+	return component.NewKeepOldProposalIns(common.GOVBoard)
 }
 
 func (helper DCBConstitutionHelper) GetBoardType() common.BoardType {

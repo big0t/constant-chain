@@ -9,7 +9,6 @@ import (
 
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
-	"github.com/constant-money/constant-chain/metadata/frombeaconins"
 	"github.com/constant-money/constant-chain/privacy"
 	"github.com/constant-money/constant-chain/wallet"
 )
@@ -164,7 +163,7 @@ func createGOVGenesisParamInst(genesisParams GenesisParams) []string {
 	// First proposal created by GOV, reward back to itself
 	keyWalletGOVAccount, _ := wallet.Base58CheckDeserialize(common.GOVAddress)
 	govAddress := keyWalletGOVAccount.KeySet.PaymentAddress
-	govUpdateInst := &frombeaconins.UpdateGOVConstitutionIns{
+	govUpdateInst := &component.UpdateGOVConstitutionIns{
 		SubmitProposalInfo: component.SubmitProposalInfo{
 			ExecuteDuration:   EndOfFirstBoard + ExtendDurationForFirstBoard,
 			Explanation:       "Genesis GOV proposal",
@@ -302,7 +301,7 @@ func createDCBGenesisParamsInst() []string {
 	// First proposal created by DCB, reward back to itself
 	keyWalletDCBAccount, _ := wallet.Base58CheckDeserialize(common.DCBAddress)
 	dcbAddress := keyWalletDCBAccount.KeySet.PaymentAddress
-	dcbUpdateInst := &frombeaconins.UpdateDCBConstitutionIns{
+	dcbUpdateInst := &component.UpdateDCBConstitutionIns{
 		SubmitProposalInfo: component.SubmitProposalInfo{
 			ExecuteDuration:   EndOfFirstBoard + ExtendDurationForFirstBoard,
 			Explanation:       "Genesis DCB proposal",
