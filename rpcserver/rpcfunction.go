@@ -1,11 +1,10 @@
 package rpcserver
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
-
+	
 	"github.com/constant-money/constant-chain/common"
 	"github.com/constant-money/constant-chain/common/base58"
 	"github.com/constant-money/constant-chain/metadata"
@@ -68,7 +67,11 @@ var RpcHandler = map[string]commandHandler{
 	RandomCommitments:               RpcServer.handleRandomCommitments,
 	HasSerialNumbers:                RpcServer.handleHasSerialNumbers,
 	HasSnDerivators:                 RpcServer.handleHasSnDerivators,
-
+	
+	//======Testing and Benchmark======
+	GetAndSendTxsFromFile: RpcServer.handleGetAndSendTxsFromFile,
+	//=================================
+	
 	//pool
 
 	// Beststate
@@ -122,6 +125,7 @@ var RpcHandler = map[string]commandHandler{
 	CreateAndSendCrowdsaleRequestConstant: RpcServer.handleCreateAndSendCrowdsaleRequestConstant,
 	GetListDCBProposalBuyingAssets:        RpcServer.handleGetListDCBProposalBuyingAssets,
 	GetListDCBProposalSellingAssets:       RpcServer.handleGetListDCBProposalSellingAssets,
+	GetDCBBondInfo:                        RpcServer.handleGetDCBBondInfo,
 
 	// Trade bonds with GOV
 	CreateAndSendTradeActivation: RpcServer.handleCreateAndSendTradeActivation,
@@ -179,6 +183,7 @@ var RpcHandler = map[string]commandHandler{
 	GetBondTypes:                           RpcServer.handleGetBondTypes,
 	GetCurrentSellingBondTypes:             RpcServer.handleGetCurrentSellingBondTypes,
 	GetCurrentStabilityInfo:                RpcServer.handleGetCurrentStabilityInfo,
+	GetOracleTokenIDs:                      RpcServer.handleGetOracleTokenIDs,
 	GetCurrentOracleNetworkParams:          RpcServer.handleGetCurrentOracleNetworkParams,
 	SignUpdatingOracleBoardContent:         RpcServer.handleSignUpdatingOracleBoardContent,
 	GetGOVConstitution:                     RpcServer.handleGetGOVConstitution,
@@ -190,12 +195,15 @@ var RpcHandler = map[string]commandHandler{
 	CreateAndSendTxWithSenderAddress:       RpcServer.handleCreateAndSendTxWithSenderAddress,
 	CreateAndSendTxWithBuyGOVTokensRequest: RpcServer.handleCreateAndSendTxWithBuyGOVTokensRequest,
 	GetCurrentSellingGOVTokens:             RpcServer.handleGetCurrentSellingGOVTokens,
+	GetAssetPrice:                          RpcServer.handleGetAssetPrice,
 
 	// wallet
 	GetPublicKeyFromPaymentAddress: RpcServer.handleGetPublicKeyFromPaymentAddress,
 	DefragmentAccount:              RpcServer.handleDefragmentAccount,
 
 	GetStackingAmount: RpcServer.handleGetStakingAmount,
+
+	HashToIdenticon: RpcServer.handleHashToIdenticon,
 }
 
 // Commands that are available to a limited user
@@ -485,7 +493,7 @@ func (rpcServer RpcServer) handleEstimateFee(params interface{}, closeChan <-cha
 	}
 	lastByte := senderKeySet.PaymentAddress.Pk[len(senderKeySet.PaymentAddress.Pk)-1]
 	shardIDSender := common.GetShardIDFromLastByte(lastByte)
-	fmt.Printf("Done param #1: keyset: %+v\n", senderKeySet)
+	//fmt.Printf("Done param #1: keyset: %+v\n", senderKeySet)
 
 	constantTokenID := &common.Hash{}
 	constantTokenID.SetBytes(common.ConstantID[:])
@@ -609,4 +617,17 @@ func (rpcServer RpcServer) handleGetStakingAmount(params interface{}, closeChan 
 		amount = metadata.GetShardStateAmount()
 	}
 	return amount, nil
+}
+
+func (rpcServer RpcServer) handleHashToIdenticon(params interface{}, closeChan <-chan struct{}) (interface{}, *RPCError) {
+	arrayParams := common.InterfaceSlice(params)
+	result := make([]string, 0)
+	for _, hash := range arrayParams {
+		temp, err := common.Hash{}.NewHashFromStr(hash.(string))
+		if err != nil {
+			return nil, NewRPCError(ErrUnexpected, errors.New("Hash string is invalid"))
+		}
+		result = append(result, common.Render(temp.GetBytes()))
+	}
+	return result, nil
 }

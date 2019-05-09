@@ -59,11 +59,6 @@ func (mb *MetadataBase) Hash() *common.Hash {
 	return &hash
 }
 
-func (mb *MetadataBase) ValidateBeforeNewBlock(tx Transaction, bcr BlockchainRetriever, shardID byte) bool {
-	// TODO: 0xjackalope
-	return true
-}
-
 func (mb *MetadataBase) CheckTransactionFee(tx Transaction, minFeePerKbTx uint64) bool {
 	txFee := tx.GetTxFee()
 	fullFee := minFeePerKbTx * tx.GetTxActualSize()
@@ -145,9 +140,11 @@ type BlockchainRetriever interface {
 	GetLoanWithdrawed(loanID []byte) (bool, error)
 
 	// For validating crowdsale
-	GetProposedCrowdsale([]byte) (*component.SaleData, error)
+	GetSaleData([]byte) (*component.SaleData, error)
+	GetAllSaleData() ([]*component.SaleData, error)
 	CrowdsaleExisted(saleID []byte) bool
-	GetDCBAvailableAsset(assetID *common.Hash) uint64
+	GetDCBBondInfo(bondID *common.Hash) (uint64, uint64)
+	GetDCBFreeBond(bondID *common.Hash) uint64
 
 	// For validating reserve
 	GetAssetPrice(assetID *common.Hash) uint64
@@ -173,7 +170,6 @@ type Metadata interface {
 	// isContinue, ok, err
 	ValidateSanityData(bcr BlockchainRetriever, tx Transaction) (bool, bool, error)
 	ValidateMetadataByItself() bool // TODO: need to define the method for metadata
-	ValidateBeforeNewBlock(tx Transaction, bcr BlockchainRetriever, shardID byte) bool
 	VerifyMultiSigs(Transaction, database.DatabaseInterface) (bool, error)
 	BuildReqActions(tx Transaction, bcr BlockchainRetriever, shardID byte) ([][]string, error)
 	ProcessWhenInsertBlockShard(tx Transaction, bcr BlockchainRetriever) error

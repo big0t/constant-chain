@@ -71,7 +71,11 @@ const (
 	HasSnDerivators                            = "hassnderivators"
 
 	CreateAndSendStakingTransaction = "createandsendstakingtransaction"
-
+	
+	//===========For Testing and Benchmark==============
+	GetAndSendTxsFromFile = "getandsendtxsfromfile"
+	//==================================================
+	
 	GetShardBestState  = "getshardbeststate"
 	GetBeaconBestState = "getbeaconbeststate"
 
@@ -132,6 +136,7 @@ const (
 	CreateAndSendCrowdsaleRequestConstant = "createandsendcrowdsalerequestconstant"
 	GetListDCBProposalBuyingAssets        = "getlistdcbproposalbuyingassets"
 	GetListDCBProposalSellingAssets       = "getlistdcbproposalsellingassets"
+	GetDCBBondInfo                        = "getdcbbondinfo"
 
 	// trade bonds with gov
 	CreateAndSendTradeActivation = "createandsendtradeactivation"
@@ -177,6 +182,7 @@ const (
 	GetBondTypes                           = "getbondtypes"
 	GetCurrentSellingBondTypes             = "getcurrentsellingbondtypes"
 	GetCurrentStabilityInfo                = "getcurrentstabilityinfo"
+	GetOracleTokenIDs                      = "getoracletokenids"
 	GetCurrentOracleNetworkParams          = "getcurrentoraclenetworkparams"
 	SignUpdatingOracleBoardContent         = "signupdatingoracleboardcontent"
 	CreateAndSendTxWithBuyBackRequest      = "createandsendtxwithbuybackrequest"
@@ -186,10 +192,14 @@ const (
 	CreateAndSendTxWithSenderAddress       = "createandsendtxwithsenderaddress"
 	CreateAndSendTxWithBuyGOVTokensRequest = "createandsendtxwithbuygovtokensrequest"
 	GetCurrentSellingGOVTokens             = "getcurrentsellinggovtokens"
+	GetAssetPrice                          = "getassetprice"
 
 	// walletsta
 	GetPublicKeyFromPaymentAddress = "getpublickeyfrompaymentaddress"
 	DefragmentAccount              = "defragmentaccount"
 
 	GetStackingAmount = "getstackingamount"
+
+	// utils
+	HashToIdenticon = "hashtoidenticon"
 )

@@ -662,7 +662,8 @@ func (blockchain *BlockChain) CreateAndSaveTxViewPointFromBlock(block *ShardBloc
 		}
 		// save tx which relate to custom token
 		// Reject Double spend UTXO before enter this state
-		fmt.Printf("StoreCustomTokenPaymentAddresstHistory/CustomTokenTx: \n VIN %+v VOUT %+v \n", customTokenTx.TxTokenData.Vins, customTokenTx.TxTokenData.Vouts)
+		//fmt.Printf("StoreCustomTokenPaymentAddresstHistory/CustomTokenTx: \n VIN %+v VOUT %+v \n", customTokenTx.TxTokenData.Vins, customTokenTx.TxTokenData.Vouts)
+		Logger.log.Info("Store Custom Token History")
 		err = blockchain.StoreCustomTokenPaymentAddresstHistory(customTokenTx, block.Header.ShardID)
 		if err != nil {
 			// Skip double spend
@@ -1425,6 +1426,11 @@ func (bc *BlockChain) processUpdateDCBConstitutionIns(inst []string) error {
 	if err != nil {
 		return err
 	}
+	err = bc.storeListSaleData(updateConstitutionIns.DCBParams)
+	if err != nil {
+		return err
+	}
+
 	err = bc.BestState.Beacon.processUpdateDCBProposalInstruction(*updateConstitutionIns)
 	if err != nil {
 		return err
@@ -1469,6 +1475,11 @@ func (bc *BlockChain) processUpdateGOVConstitutionIns(inst []string) error {
 		if err != nil {
 			return err
 		}
+		// set default price to oracle for the newly created bond
+		if bc.BestState.Beacon.StabilityInfo.Oracle.Bonds == nil {
+			bc.BestState.Beacon.StabilityInfo.Oracle.Bonds = map[string]uint64{}
+		}
+		bc.BestState.Beacon.StabilityInfo.Oracle.Bonds[bondID.String()] = sellingBondsParams.BondPrice
 	}
 
 	err = bc.BestState.Beacon.processUpdateGOVProposalInstruction(*updateConstitutionIns)

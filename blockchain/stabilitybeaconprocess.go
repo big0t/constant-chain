@@ -9,11 +9,12 @@ import (
 
 	"github.com/constant-money/constant-chain/blockchain/component"
 	"github.com/constant-money/constant-chain/common"
+	"github.com/constant-money/constant-chain/database"
 	"github.com/constant-money/constant-chain/metadata"
 	"github.com/pkg/errors"
 )
 
-func (bsb *BestStateBeacon) processStabilityInstruction(inst []string) error {
+func (bsb *BestStateBeacon) processStabilityInstruction(inst []string, db database.DatabaseInterface) error {
 	if inst[0] == InitAction {
 		// init data for network
 		switch inst[1] {
@@ -87,11 +88,8 @@ func (bsb *BestStateBeacon) processStabilityInstruction(inst []string) error {
 		}
 		bsb.UpdateGOVFund(-int64(rewardGOVProposalSubmitterIns.Amount))
 
-	case strconv.Itoa(metadata.CrowdsalePaymentMeta):
-		return bsb.processCrowdsalePaymentInstruction(inst)
-
 	case strconv.Itoa(metadata.BuyFromGOVRequestMeta):
-		return bsb.processBuyFromGOVReqInstruction(inst)
+		return bsb.processBuyFromGOVReqInstruction(inst, db)
 
 	case strconv.Itoa(metadata.BuyBackRequestMeta):
 		return bsb.processBuyBackReqInstruction(inst)
@@ -288,7 +286,7 @@ func (bsb *BestStateBeacon) processBuyBackReqInstruction(inst []string) error {
 	return nil
 }
 
-func (bsb *BestStateBeacon) processBuyFromGOVReqInstruction(inst []string) error {
+func (bsb *BestStateBeacon) processBuyFromGOVReqInstruction(inst []string, db database.DatabaseInterface) error {
 	instType := inst[2]
 	if instType == "refund" {
 		return nil
@@ -309,6 +307,15 @@ func (bsb *BestStateBeacon) processBuyFromGOVReqInstruction(inst []string) error
 	sellingBondsParams := stabilityInfo.GOVConstitution.GOVParams.SellingBonds
 	if sellingBondsParams != nil {
 		sellingBondsParams.BondsToSell -= md.Amount
+		sellingBondsParamsBytes, err := json.Marshal(sellingBondsParams)
+		if err != nil {
+			return err
+		}
+		bondID := sellingBondsParams.GetID()
+		err = db.StoreSoldBondTypes(bondID, sellingBondsParamsBytes)
+		if err != nil {
+			return err
+		}
 		stabilityInfo.SalaryFund += (md.Amount * md.BuyPrice)
 	}
 	return nil
@@ -399,15 +406,6 @@ func (bsb *BestStateBeacon) processUpdateDCBProposalInstruction(ins component.Up
 	if ins.SubmitProposalInfo.ConstitutionIndex == 0 {
 		bsb.StabilityInfo.DCBConstitution.ConstitutionIndex = 0
 	}
-	// Store saledata in state
-	for _, data := range dcbParams.ListSaleData {
-		key := getSaleDataKeyBeacon(data.SaleID)
-		if _, ok := bsb.Params[key]; ok {
-			continue
-		}
-		value := getSaleDataValueBeacon(&data)
-		bsb.Params[key] = value
-	}
 	return nil
 }
 
@@ -470,27 +468,91 @@ func (bsb *BestStateBeacon) processKeepOldGOVProposalInstruction(ins component.K
 	return nil
 }
 
-func (bsb *BestStateBeacon) processCrowdsalePaymentInstruction(inst []string) error {
-	fmt.Printf("[db] beaconProcess found inst: %+v\n", inst)
-	// All shard update bsb, only DCB shard creates payment txs
-	paymentInst, err := component.ParseCrowdsalePaymentInstruction(inst[2])
+func (bc *BlockChain) updateDCBBuyBondInfo(bondID *common.Hash, bondAmount uint64, price uint64) error {
+	amountAvail, cstPaid := bc.config.DataBase.GetDCBBondInfo(bondID)
+	amountAvail += bondAmount
+	cstPaid += price * bondAmount
+	fmt.Println("[db] updateDCBBuyBond:", amountAvail, cstPaid)
+	return bc.config.DataBase.StoreDCBBondInfo(bondID, amountAvail, cstPaid)
+}
+
+func (bc *BlockChain) updateDCBSellBondInfo(bondID *common.Hash, bondAmount uint64) error {
+	amountAvail, cstPaid := bc.config.DataBase.GetDCBBondInfo(bondID)
+	if amountAvail < bondAmount {
+		return fmt.Errorf("invalid sell bond info update, amount available lower than payment: %d, %d", amountAvail, bondAmount)
+	}
+
+	avgPrice := uint64(0)
+	if amountAvail > 0 {
+		avgPrice = cstPaid / amountAvail
+	}
+
+	principleCovered := bondAmount * avgPrice
+	if cstPaid < principleCovered {
+		principleCovered = cstPaid
+	}
+	amountAvail -= bondAmount
+	cstPaid -= principleCovered
+
+	fmt.Println("[db] updateDCBSellBond:", amountAvail, cstPaid, principleCovered)
+	return bc.config.DataBase.StoreDCBBondInfo(bondID, amountAvail, cstPaid)
+}
+
+func (bc *BlockChain) updateDCBSellBondProfit(bondID *common.Hash, soldValue, soldBonds uint64) uint64 {
+	amountAvail, cstPaid := bc.config.DataBase.GetDCBBondInfo(bondID)
+	avgPrice := uint64(0)
+	if amountAvail > 0 {
+		avgPrice = cstPaid / amountAvail
+	}
+	profit := uint64(0)
+	if soldValue > avgPrice*soldBonds {
+		profit = soldValue - avgPrice*soldBonds
+	}
+	bc.BestState.Beacon.StabilityInfo.BankFund += profit
+	fmt.Println("[db] update DCB Profit:", profit, soldValue, soldBonds)
+	return profit
+}
+
+func (bc *BlockChain) processCrowdsalePaymentInstruction(inst []string) error {
+	// All shards update, only DCB shard creates payment txs
+	fmt.Printf("[db] updateLocalState found inst: %+v\n", inst)
+	paymentInst, err := ParseCrowdsalePaymentInstruction(inst[2])
+	if err != nil || !paymentInst.UpdateSale {
+		return err
+	}
+
+	sale, err := bc.GetSaleData(paymentInst.SaleID)
 	if err != nil {
 		return err
 	}
-	if paymentInst.UpdateSale {
-		saleData, err := bsb.GetSaleData(paymentInst.SaleID)
-		if err != nil {
-			fmt.Printf("[db] error get sale data: %+v\n", err)
-			return err
-		}
-		saleData.BuyingAmount -= paymentInst.SentAmount
-		saleData.SellingAmount -= paymentInst.Amount
 
-		key := getSaleDataKeyBeacon(paymentInst.SaleID)
-		bsb.Params[key] = getSaleDataValueBeacon(saleData)
-		fmt.Printf("[db] updated crowdsale: %s\n", bsb.Params[key])
+	// Trading amount should always be lower or equal to sale amount
+	bondAmount := paymentInst.Amount
+	if sale.Buy {
+		bondAmount = paymentInst.SentAmount
 	}
-	return nil
+	if sale.Amount < bondAmount {
+		return fmt.Errorf("invalid crowdsale payment inst, reached limit: %d, %d", sale.Amount, bondAmount)
+	}
+
+	if sale.Buy {
+		// Update average price per bond
+		err = bc.updateDCBBuyBondInfo(sale.BondID, bondAmount, sale.Price)
+	} else {
+		// Add profit only when selling bonds
+		bc.updateDCBSellBondProfit(&paymentInst.AssetID, paymentInst.SentAmount, bondAmount)
+
+		// Update average price per bond
+		err = bc.updateDCBSellBondInfo(sale.BondID, bondAmount)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// Update crowdsale amount left
+	sale.Amount -= bondAmount
+	return bc.storeSaleData(sale)
 }
 
 func (bc *BlockChain) processLoanWithdrawInstruction(inst []string) error {
@@ -572,6 +634,77 @@ func (bc *BlockChain) processLoanPaymentInstruction(inst []string) error {
 	return bc.processLoanPayment(loanID, amountSent, interestRate, maturity, beaconHeight)
 }
 
+func (bc *BlockChain) updateDCBBondBoughtFromGOV(inst []string) error {
+	instType := inst[2]
+	if instType == "refund" {
+		return nil
+	}
+
+	// accepted
+	contentStr := inst[3]
+	contentBytes, err := base64.StdEncoding.DecodeString(contentStr)
+	if err != nil {
+		return err
+	}
+	var buySellReqAction BuySellReqAction
+	err = json.Unmarshal(contentBytes, &buySellReqAction)
+	if err != nil {
+		return err
+	}
+
+	md := buySellReqAction.Meta
+	if md.TradeID == nil {
+		return nil
+	}
+
+	amountAvail, cstPaid := bc.config.DataBase.GetDCBBondInfo(&md.TokenID)
+	amountAvail += md.Amount
+	cstPaid += md.BuyPrice * md.Amount
+	return bc.config.DataBase.StoreDCBBondInfo(&md.TokenID, amountAvail, cstPaid)
+}
+
+func (bc *BlockChain) updateDCBBuyBackProfit(buyBackInfo BuyBackInfo) error {
+	if len(buyBackInfo.TradeID) == 0 {
+		return nil
+	}
+
+	profit := bc.updateDCBSellBondProfit(&buyBackInfo.BondID, buyBackInfo.Value*buyBackInfo.BuyBackPrice, buyBackInfo.Value)
+	fmt.Printf("[db] DCBBuyBack added profit: %d\n", profit)
+	return nil
+}
+
+func (bc *BlockChain) updateDCBBondSoldToGOV(inst []string) error {
+	instType := inst[2]
+	if instType == "refund" {
+		return nil
+	}
+	// accepted
+	buyBackInfoStr := inst[3]
+	var buyBackInfo BuyBackInfo
+	err := json.Unmarshal([]byte(buyBackInfoStr), &buyBackInfo)
+	if err != nil {
+		return err
+	}
+
+	if buyBackInfo.TradeID == nil {
+		return nil
+	}
+
+	bondAmount := buyBackInfo.Value
+	amountAvail, _ := bc.config.DataBase.GetDCBBondInfo(&buyBackInfo.BondID)
+	if amountAvail < bondAmount {
+		return fmt.Errorf("invalid trade bond buy back, amount available lower than payment: %d, %d", amountAvail, bondAmount)
+	}
+
+	// Update profit first to prevent average price per bond changes
+	err = bc.updateDCBBuyBackProfit(buyBackInfo)
+	if err != nil {
+		return err
+	}
+
+	return bc.updateDCBSellBondInfo(&buyBackInfo.BondID, bondAmount)
+}
+
 func (bc *BlockChain) updateStabilityLocalState(block *BeaconBlock) error {
 	for _, inst := range block.Body.Instructions {
 		var err error
@@ -590,6 +723,15 @@ func (bc *BlockChain) updateStabilityLocalState(block *BeaconBlock) error {
 			err = bc.processKeepOldDCBConstitutionIns(inst)
 		case strconv.Itoa(component.KeepOldGOVProposalIns):
 			err = bc.processKeepOldGOVConstitutionIns(inst)
+
+		case strconv.Itoa(metadata.CrowdsalePaymentMeta):
+			err = bc.processCrowdsalePaymentInstruction(inst)
+
+		case strconv.Itoa(metadata.BuyFromGOVRequestMeta):
+			err = bc.updateDCBBondBoughtFromGOV(inst)
+
+		case strconv.Itoa(metadata.BuyBackRequestMeta):
+			err = bc.updateDCBBondSoldToGOV(inst)
 		}
 
 		if err != nil {
@@ -597,4 +739,23 @@ func (bc *BlockChain) updateStabilityLocalState(block *BeaconBlock) error {
 		}
 	}
 	return bc.GetDatabase().AddConstantsPriceDB(bc.BestState.Beacon.StabilityInfo.DCBConstitution.ConstitutionIndex, bc.BestState.Beacon.StabilityInfo.Oracle.Constant)
+}
+
+func (bc *BlockChain) storeSaleData(saleData *component.SaleData) error {
+	var saleRaw []byte
+	var err error
+	if saleRaw, err = json.Marshal(saleData); err == nil {
+		err = bc.config.DataBase.StoreSaleData(saleData.SaleID, saleRaw)
+	}
+	return err
+}
+
+func (bc *BlockChain) storeListSaleData(dcbParams component.DCBParams) error {
+	// Store saledata in state
+	for _, data := range dcbParams.ListSaleData {
+		if err := bc.storeSaleData(&data); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -136,7 +136,7 @@ Parameter #2–whether to allow high fees
 Result—a TXID or error Message
 */
 func (rpcServer RpcServer) handleSendRawTransaction(params interface{}, closeChan <-chan struct{}) (interface{}, *RPCError) {
-	Logger.log.Info(params)
+	Logger.log.Debug(params)
 	arrayParams := common.InterfaceSlice(params)
 	base58CheckData := arrayParams[0].(string)
 	rawTxBytes, _, err := base58.Base58Check{}.Decode(base58CheckData)
@@ -162,7 +162,7 @@ func (rpcServer RpcServer) handleSendRawTransaction(params interface{}, closeCha
 		return nil, NewRPCError(ErrSendTxData, err)
 	}
 
-	Logger.log.Infof("there is hash of transaction: %s\n", hash.String())
+	Logger.log.Infof("New transaction hash: %+v \n", *hash)
 
 	// broadcast Message
 	txMsg, err := wire.MakeEmptyMessage(wire.CmdTx)
@@ -215,7 +215,17 @@ func (rpcServer RpcServer) handleGetMempoolInfo(params interface{}, closeChan <-
 	result.Size = rpcServer.config.TxMemPool.Count()
 	result.Bytes = rpcServer.config.TxMemPool.Size()
 	result.MempoolMaxFee = rpcServer.config.TxMemPool.MaxFee()
-	result.ListTxs = rpcServer.config.TxMemPool.ListTxs()
+	listTxsDetail := rpcServer.config.TxMemPool.ListTxsDetail()
+	if len(listTxsDetail) > 0 {
+		result.ListTxs = make([]jsonresult.GetMempoolInfoTx, 0)
+		for _, tx := range listTxsDetail {
+			item := jsonresult.GetMempoolInfoTx{
+				LockTime: tx.GetLockTime(),
+				TxID:     tx.Hash().String(),
+			}
+			result.ListTxs = append(result.ListTxs, item)
+		}
+	}
 	return result, nil
 }
 
@@ -448,11 +458,11 @@ func (rpcServer RpcServer) handleCreateAndSendCustomTokenTransaction(params inte
 	}
 	newParam := make([]interface{}, 0)
 	newParam = append(newParam, base58CheckData)
-	_, err = rpcServer.handleSendRawCustomTokenTransaction(newParam, closeChan)
+	txID, err := rpcServer.handleSendRawCustomTokenTransaction(newParam, closeChan)
 	if err != nil {
 		return nil, err
 	}
-	return tx, nil
+	return txID, nil
 }
 
 func (rpcServer RpcServer) handleGetListCustomTokenBalance(params interface{}, closeChan <-chan struct{}) (interface{}, *RPCError) {

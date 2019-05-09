@@ -184,7 +184,6 @@ func (blockChain *BlockChain) buildStabilityInstructions(
 ) ([][]string, error) {
 	instructions := [][]string{}
 
-	fmt.Printf("[db] building stability instructions\n")
 	for _, inst := range shardBlockInstructions {
 		if len(inst) == 0 {
 			continue
@@ -214,7 +213,7 @@ func (blockChain *BlockChain) buildStabilityInstructions(
 			newInst, err = buildInstructionsForBuyGOVTokensReq(shardID, contentStr, beaconBestState, accumulativeValues)
 
 		case metadata.CrowdsaleRequestMeta:
-			newInst, err = buildInstructionsForCrowdsaleRequest(shardID, contentStr, beaconBestState, accumulativeValues)
+			newInst, err = buildInstructionsForCrowdsaleRequest(shardID, contentStr, beaconBestState, accumulativeValues, blockChain)
 
 		case metadata.TradeActivationMeta:
 			newInst, err = buildInstructionsForTradeActivation(shardID, contentStr)
@@ -410,10 +409,10 @@ func (blockgen *BlkTmplGenerator) buildStabilityResponseTxsFromInstructions(
 					}
 					resTxs = append(resTxs, tx)
 				case metadata.CrowdsalePaymentMeta:
-					txs, err = blockgen.buildPaymentForCrowdsale(l[2], unspentTokens, producerPrivateKey)
+					txs, err = blockgen.buildPaymentForCrowdsale(l[2], unspentTokens, producerPrivateKey, shardID)
 
 				case metadata.TradeActivationMeta:
-					txs, err = blockgen.buildTradeActivationTx(l[2], unspentTokens, producerPrivateKey, tradeActivated)
+					txs, err = blockgen.buildTradeActivationTx(l[2], unspentTokens, producerPrivateKey, tradeActivated, shardID)
 
 				case metadata.BuyFromGOVRequestMeta:
 					contentStr := l[3]
