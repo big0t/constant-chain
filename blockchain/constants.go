@@ -18,8 +18,8 @@ const (
 	ThresholdRatioOfDCBCrisis   = 9000
 	ThresholdRatioOfGOVCrisis   = 9000
 	ConstitutionPerBoard        = 10
-	EndOfFirstBoard             = 70
-	ExtendDurationForFirstBoard = 30
+	EndOfFirstBoard             = 45
+	ExtendDurationForFirstBoard = 25
 	BaseSalaryBoard             = 10000
 )
 
