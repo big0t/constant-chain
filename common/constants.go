@@ -85,6 +85,14 @@ var (
 	GOVVotingTokenID = Hash{6}
 )
 
+// special token data
+const (
+	DCBTokenName   = "Decentralized central bank token"
+	DCBTokenSymbol = "DCB"
+	GOVTokenName   = "Government token"
+	GOVTokenSymbol = "GOV"
+)
+
 // asset IDs for oracle feed (must prefix with 99)
 var (
 	BTCAssetID = Hash{99, 99, 99, 99, 99, 99, 99, 99, 1}

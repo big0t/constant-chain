@@ -175,19 +175,22 @@ func (blockgen *BlkTmplGenerator) buildIssuingRes(
 		meta := metadata.NewIssuingResponse(txReqID, metadata.IssuingResponseMeta)
 		txCustom := &transaction.TxCustomToken{}
 		customTokenParamTx := &transaction.CustomTokenParamTx{
-			PropertyID:  common.DCBTokenID.String(),
-			TokenTxType: transaction.CustomTokenMint,
-			Amount:      issuingInfo.Amount,
+			PropertyName:   common.DCBTokenName,
+			PropertySymbol: common.DCBTokenSymbol,
+			PropertyID:     common.DCBTokenID.String(),
+			TokenTxType:    transaction.CustomTokenInit,
+			Amount:         issuingInfo.Amount,
 			Receiver: []transaction.TxTokenVout{
 				transaction.TxTokenVout{
 					Value:          issuingInfo.Amount,
 					PaymentAddress: issuingInfo.ReceiverAddress,
 				},
 			},
+			Mintable: true,
 		}
 		err = txCustom.Init(
 			blkProducerPrivateKey,
-			[]*privacy.PaymentInfo{},
+			nil,
 			nil,
 			0,
 			customTokenParamTx,
@@ -203,7 +206,6 @@ func (blockgen *BlkTmplGenerator) buildIssuingRes(
 		fmt.Printf("[db] build issuing resp success: %h\n", txCustom.Hash())
 		return []metadata.Transaction{txCustom}, nil
 	}
-	// TODO(@0xbunyip): fail to issue/refund
 	return []metadata.Transaction{}, nil
 }
 
