@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/constant-money/constant-chain/database/lvdb"
 
@@ -21,7 +22,11 @@ type DCBVoteProposalMetadata struct {
 }
 
 func (dcbVoteProposalMetadata *DCBVoteProposalMetadata) ValidateSanityData(bcr BlockchainRetriever, tx Transaction) (bool, bool, error) {
-	//return dcbVoteProposalMetadata.VoteProposalMetadata.ValidateSanityData(bcr, tx)
+	rightConstitutionIndex := bcr.GetConstitution(common.GOVBoard).GetConstitutionIndex() + 1
+	if dcbVoteProposalMetadata.NormalVoteProposalMetadata.ConstitutionIndex != rightConstitutionIndex {
+		fmt.Printf("[ndh] - Wrong constitution index, right constitution index is %+v\n", rightConstitutionIndex)
+		return true, false, errors.New("Wrong constitution index")
+	}
 	return true, true, nil
 }
 
@@ -41,7 +46,6 @@ func NewDCBVoteProposalMetadata(
 
 func (dcbVoteProposalMetadata *DCBVoteProposalMetadata) Hash() *common.Hash {
 	record := dcbVoteProposalMetadata.NormalVoteProposalMetadata.ToBytes()
-
 	hash := common.HashH([]byte(record))
 	return &hash
 }
