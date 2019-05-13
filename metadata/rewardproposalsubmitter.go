@@ -3,6 +3,7 @@ package metadata
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/constant-money/constant-chain/blockchain/component"
@@ -42,6 +43,11 @@ func (rewardDCBProposalSubmitterMetadata *RewardDCBProposalSubmitterMetadata) Va
 }
 
 func (rewardDCBProposalSubmitterMetadata *RewardDCBProposalSubmitterMetadata) ValidateMetadataByItself() bool {
+	return true
+}
+
+func (rewardDCBProposalSubmitterMetadata *RewardDCBProposalSubmitterMetadata) CheckTransactionFee(tr Transaction, minFee uint64) bool {
+	// no need to have fee for this tx
 	return true
 }
 
@@ -93,24 +99,29 @@ func (rewardGOVProposalSubmitterMetadata *RewardGOVProposalSubmitterMetadata) Ve
 		return false, errors.New("One RewardGOVProposalSubmitter instruction just for one token receiver")
 	}
 	for i, inst := range insts {
+		fmt.Printf("[ndh] - - - - - instruction:%+v ", inst)
 		if instUsed[i] > 0 {
+			fmt.Println("is used.")
 			continue
 		}
 		if inst[0] != strconv.Itoa(component.RewardGOVProposalSubmitterIns) {
+			fmt.Println("wrong type.")
 			continue
 		}
 		if inst[1] != strconv.Itoa(int(shardID)) {
+			fmt.Println("wrong shardID")
 			continue
 		}
-		if inst[2] != "accepted" {
-			continue
-		}
-		contentStr := inst[3]
+		// if inst[2] != "accepted" {
+		// 	continue
+		// }
+		contentStr := inst[2]
 		err := json.Unmarshal([]byte(contentStr), &rewardProposalSubmitterIns)
 		if err != nil {
 			return false, err
 		}
-		if !bytes.Equal(pubkeys[0], rewardProposalSubmitterIns.ReceiverAddress.Bytes()) {
+		if !bytes.Equal(pubkeys[0], rewardProposalSubmitterIns.ReceiverAddress.Pk) {
+			fmt.Printf("tx pk: %+v, tx inst: %+v\n", pubkeys[0], rewardProposalSubmitterIns.ReceiverAddress.Pk)
 			continue
 		}
 		instIdx = i
@@ -128,4 +139,9 @@ func (rewardGOVProposalSubmitterMetadata *RewardGOVProposalSubmitterMetadata) Ve
 
 func (rewardGOVProposalSubmitterMetadata *RewardGOVProposalSubmitterMetadata) CalculateSize() uint64 {
 	return calculateSize(rewardGOVProposalSubmitterMetadata)
+}
+
+func (rewardGOVProposalSubmitterMetadata *RewardGOVProposalSubmitterMetadata) CheckTransactionFee(tr Transaction, minFee uint64) bool {
+	// no need to have fee for this tx
+	return true
 }

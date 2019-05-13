@@ -16,19 +16,21 @@ import (
 var (
 	mintDCBTokenParam = transaction.CustomTokenParamTx{
 		PropertyID:     common.DCBTokenID.String(),
-		PropertyName:   "",
-		PropertySymbol: "",
+		PropertyName:   common.DCBTokenID.String(),
+		PropertySymbol: common.DCBTokenID.String(),
 		Amount:         0,
-		TokenTxType:    transaction.CustomTokenMint,
+		TokenTxType:    transaction.CustomTokenInit,
 		Receiver:       nil,
+		Mintable:       true,
 	}
 	mintGOVTokenParam = transaction.CustomTokenParamTx{
 		PropertyID:     common.GOVTokenID.String(),
-		PropertyName:   "",
-		PropertySymbol: "",
+		PropertyName:   common.GOVTokenID.String(),
+		PropertySymbol: common.GOVTokenID.String(),
 		Amount:         0,
-		TokenTxType:    transaction.CustomTokenMint,
+		TokenTxType:    transaction.CustomTokenInit,
 		Receiver:       nil,
+		Mintable:       true,
 	}
 )
 

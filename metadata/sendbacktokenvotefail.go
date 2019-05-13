@@ -3,6 +3,7 @@ package metadata
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/constant-money/constant-chain/blockchain/component"
@@ -45,25 +46,28 @@ func (sendBackTokenVoteBoardFailMetadata *SendBackTokenVoteBoardFailMetadata) Ve
 	if len(pubkeys) != 1 {
 		return false, errors.New("One sendbacktokenvoteboardfail just for one token receiver")
 	}
+	fmt.Println("[ndh] - - SendBackTokenVoteBoardFail instruction type: ", component.SendBackTokenVoteBoardFailIns)
 	for i, inst := range insts {
+		fmt.Printf("[ndh] - - - - - instruction:%+v ", inst)
 		if instUsed[i] > 0 {
+			fmt.Println("is used.")
 			continue
 		}
 		if inst[0] != strconv.Itoa(component.SendBackTokenVoteBoardFailIns) {
+			fmt.Println("wrong type.")
 			continue
 		}
 		if inst[1] != strconv.Itoa(int(shardID)) {
+			fmt.Println("wrong shardID")
 			continue
 		}
-		if inst[2] != "accepted" {
-			continue
-		}
-		contentStr := inst[3]
+		contentStr := inst[2]
 		err := json.Unmarshal([]byte(contentStr), &sendBackTokenIns)
 		if err != nil {
 			return false, err
 		}
-		if !bytes.Equal(pubkeys[0], sendBackTokenIns.PaymentAddress.Bytes()) {
+		if !bytes.Equal(pubkeys[0], sendBackTokenIns.PaymentAddress.Pk) {
+			fmt.Printf("tx pk: %+v, tx inst: %+v\n", pubkeys[0], sendBackTokenIns.PaymentAddress.Pk)
 			continue
 		}
 		instIdx = i
@@ -80,4 +84,9 @@ func (sendBackTokenVoteBoardFailMetadata *SendBackTokenVoteBoardFailMetadata) Ve
 		return false, errors.Errorf("Wrong token amount. Right amount %+v, tx amount %+v\n", sendBackTokenIns.Amount, amounts[0])
 	}
 	return true, nil
+}
+
+func (sendBackTokenVoteBoardFailMetadata *SendBackTokenVoteBoardFailMetadata) CheckTransactionFee(tr Transaction, minFee uint64) bool {
+	// no need to have fee for this tx
+	return true
 }
