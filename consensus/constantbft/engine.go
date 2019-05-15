@@ -194,7 +194,11 @@ func (engine *Engine) execShardRole(shardID byte) {
 		cBFTMsg:   engine.cBFTMsg,
 		EngineCfg: &engine.config,
 	}
-	bftProtocol.RoundData.MinBeaconHeight = engine.config.BlockChain.BestState.Beacon.BeaconHeight
+	if engine.config.BlockChain.BestState.Beacon.BeaconHeight != 1 {
+		bftProtocol.RoundData.MinBeaconHeight = engine.config.BlockChain.BestState.Beacon.BeaconHeight - 1
+	} else {
+		bftProtocol.RoundData.MinBeaconHeight = 1
+	}
 	bftProtocol.RoundData.Round = engine.currentBFTRound
 	bftProtocol.RoundData.BestStateHash = engine.config.BlockChain.BestState.Shard[shardID].Hash()
 	bftProtocol.RoundData.Layer = common.SHARD_ROLE
